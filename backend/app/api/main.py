@@ -11,10 +11,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.api.errors import problem, register_error_handlers
+from app.api.routers.analytics import router as analytics_router
 from app.config import Settings
 from app.infrastructure.db.session import create_engine
 from app.logging import configure_logging
-from app.startup_checks import ExecutionPrerequisites, validate_execution_safety
+from app.startup_checks import (
+    ExecutionPrerequisites,
+    validate_auth_readiness,
+    validate_execution_safety,
+)
 
 log = structlog.get_logger()
 
@@ -25,6 +30,7 @@ def create_app(
     settings = settings or Settings()
     # Fail fast, before anything else starts (ADR 0007).
     validate_execution_safety(settings, prereqs or ExecutionPrerequisites())
+    validate_auth_readiness(settings)
     configure_logging(settings.log_level)
 
     @asynccontextmanager
@@ -65,6 +71,7 @@ def create_app(
         return response
 
     register_error_handlers(app)
+    app.include_router(analytics_router)
 
     @app.get("/health")
     async def health() -> dict[str, Any]:

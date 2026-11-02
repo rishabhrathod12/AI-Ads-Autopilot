@@ -18,6 +18,19 @@ class ExecutionPrerequisites:
     audit_sink: bool = False
 
 
+def validate_auth_readiness(settings: Settings) -> None:
+    """Real authentication does not exist yet, so production must not start (ADR 0008).
+
+    Until it does, tenants are identified by a development-only header; serving real traffic that
+    way would let any caller read any seller's data.
+    """
+    if settings.app_env == "production":
+        raise UnsafeConfigurationError(
+            "APP_ENV=production refused: real authentication is not implemented yet. "
+            "It is required before any non-local deployment."
+        )
+
+
 def validate_execution_safety(settings: Settings, prereqs: ExecutionPrerequisites) -> None:
     if not settings.ad_execution_enabled:
         return
