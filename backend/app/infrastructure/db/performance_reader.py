@@ -17,6 +17,8 @@ from app.application.ports.performance_reader import (
     EntityTotals,
     Freshness,
     Provenance,
+    SearchTermInfo,
+    TargetInfo,
 )
 from app.domain.ads.models import DataSource, EntityType
 from app.domain.kpi.metrics import MetricTotals
@@ -103,6 +105,49 @@ class SqlPerformanceReader:
                 data_source=DataSource(c.data_source),
             )
             for c in (await self._s.scalars(stmt)).all()
+        ]
+
+    async def targets(self) -> list[TargetInfo]:
+        t, g = m.KeywordTarget, m.AdGroup
+        stmt = (
+            select(t, g.campaign_id)
+            .join(g, g.id == t.ad_group_id)
+            .where(t.organization_id == self._org)
+            .order_by(t.external_id)
+        )
+        return [
+            TargetInfo(
+                id=row.id,
+                external_id=row.external_id,
+                ad_group_id=row.ad_group_id,
+                campaign_id=campaign_id,
+                text=row.text,
+                match_type=row.match_type,
+                bid_paise=row.bid_paise,
+                state=row.state,
+                is_negative=row.is_negative,
+            )
+            for row, campaign_id in (await self._s.execute(stmt)).all()
+        ]
+
+    async def search_terms(self) -> list[SearchTermInfo]:
+        s_, g = m.SearchTermRow, m.AdGroup
+        stmt = (
+            select(s_, g.campaign_id)
+            .join(g, g.id == s_.ad_group_id)
+            .where(s_.organization_id == self._org)
+            .order_by(s_.external_id)
+        )
+        return [
+            SearchTermInfo(
+                id=row.id,
+                external_id=row.external_id,
+                ad_group_id=row.ad_group_id,
+                campaign_id=campaign_id,
+                target_id=row.target_id,
+                term=row.term,
+            )
+            for row, campaign_id in (await self._s.execute(stmt)).all()
         ]
 
     async def daily_totals(

@@ -16,6 +16,8 @@ from app.application.ports.performance_reader import (
     EntityTotals,
     Freshness,
     Provenance,
+    SearchTermInfo,
+    TargetInfo,
 )
 from app.domain.ads.ids import entity_uuid
 from app.domain.ads.models import DataSource, EntityType
@@ -80,6 +82,48 @@ class FakeReader:
             key=lambda c: c.external_id,
         )
 
+    def _campaign_of_ad_group(self) -> dict[str, str]:
+        return {g.external_id: g.campaign_id for g in self.data.ad_groups}
+
+    async def targets(self) -> list[TargetInfo]:
+        camp = self._campaign_of_ad_group()
+        u = self.org
+        return sorted(
+            (
+                TargetInfo(
+                    id=entity_uuid(u, "target", t.external_id),
+                    external_id=t.external_id,
+                    ad_group_id=entity_uuid(u, "ad_group", t.ad_group_id),
+                    campaign_id=entity_uuid(u, "campaign", camp[t.ad_group_id]),
+                    text=t.text,
+                    match_type=t.match_type.value,
+                    bid_paise=t.bid_paise,
+                    state=t.state.value,
+                    is_negative=t.is_negative,
+                )
+                for t in self.data.targets
+            ),
+            key=lambda x: x.external_id,
+        )
+
+    async def search_terms(self) -> list[SearchTermInfo]:
+        camp = self._campaign_of_ad_group()
+        u = self.org
+        return sorted(
+            (
+                SearchTermInfo(
+                    id=entity_uuid(u, "search_term", s.external_id),
+                    external_id=s.external_id,
+                    ad_group_id=entity_uuid(u, "ad_group", s.ad_group_id),
+                    campaign_id=entity_uuid(u, "campaign", camp[s.ad_group_id]),
+                    target_id=entity_uuid(u, "target", s.target_id) if s.target_id else None,
+                    term=s.term,
+                )
+                for s in self.data.search_terms
+            ),
+            key=lambda x: x.external_id,
+        )
+
     async def daily_totals(
         self,
         entity_type: EntityType,
@@ -112,17 +156,23 @@ class FakeReader:
     ) -> list[EntityTotals]:
         t = self.data.metrics[entity_type.value]
         m = self._mask(t, period, include_immature, self._ext_ids(entity_type, entity_ids))
-        out = []
-        for i in sorted({int(e) for e in t.entity[m]}):
-            sel = m & (t.entity == i)
-            out.append(
-                EntityTotals(
-                    entity_uuid(self.org, entity_type.value, t.ids[i]),
-                    MetricTotals(*(int(getattr(t, f)[sel].sum()) for f in FIELDS)),
-                    int(sel.sum()),
-                    int((t.day[sel] > self.data.mature_through).sum()),
-                )
+        n = len(t.ids)
+        ent = t.entity[m]
+        active = np.bincount(ent, minlength=n)
+        immature = np.bincount(ent[t.day[m] > self.data.mature_through], minlength=n)
+        sums = {
+            f: np.rint(np.bincount(ent, weights=getattr(t, f)[m], minlength=n)).astype(np.int64)
+            for f in FIELDS
+        }
+        out = [
+            EntityTotals(
+                entity_uuid(self.org, entity_type.value, t.ids[i]),
+                MetricTotals(*(int(sums[f][i]) for f in FIELDS)),
+                int(active[i]),
+                int(immature[i]),
             )
+            for i in np.nonzero(active)[0]
+        ]
         return sorted(out, key=lambda e: e.entity_id)
 
     async def daily_by_entity(

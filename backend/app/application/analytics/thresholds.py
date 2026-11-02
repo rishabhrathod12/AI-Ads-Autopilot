@@ -21,5 +21,47 @@ WATCH_ACOS_MULTIPLE = Decimal("1.3")
 BUDGET_CAP_SPEND_SHARE = Decimal("0.9")
 BUDGET_CONSTRAINED_DAYS_SHARE = Decimal("0.5")
 
+# ---- keyword / search-term findings ---------------------------------------------------------
+# Below this many clicks an item is "low data": never flagged, only counted.
+MIN_CLICKS_FOR_FINDING = 10
+
+# A zero-order target/term is *confirmed* waste when, at its campaign's conversion rate, zero
+# orders would happen by chance at most 5% of the time; *watch* at 20%. (About 32 clicks at a 9%
+# CVR for confirmed.) The reference rate must itself rest on at least MIN_CLICKS_FOR_HEALTH clicks.
+WASTE_CONFIRMED_MAX_CHANCE = 0.05
+WASTE_WATCH_MAX_CHANCE = 0.20
+
+# Underperforming: has orders, but so few for its clicks that luck is an unlikely explanation
+# (lower-tail chance <= 5%) AND its ACOS is above target.
+UNDERPERFORMING_MAX_CHANCE = 0.05
+
+# Opportunity: a converting term not yet targeted exactly. Needs real orders, ACOS within target,
+# and is ranked by the exact 95% lower bound of its conversion rate.
+OPPORTUNITY_MIN_ORDERS = 2
+OPPORTUNITY_BOUND_ALPHA = 0.05
+
+# ---- anomaly detection ------------------------------------------------------------------------
+# Watch the most recent ANOMALY_MONITOR_DAYS mature days against the ANOMALY_REFERENCE_DAYS before.
+ANOMALY_MONITOR_DAYS = 14
+ANOMALY_REFERENCE_DAYS = 56
+# Reference needs this much evidence before a campaign can be monitored at all.
+ANOMALY_MIN_REFERENCE_CLICKS = 500
+ANOMALY_MIN_REFERENCE_DAYS = 28  # for the CPC / spend detectors
+ANOMALY_MIN_CLICKS_FOR_CPC_DAY = 5
+
+# Conversion rate (Bernoulli CUSUM): the design shifts are "rate fell to 60%" / "rose to 150%".
+CVR_RATIO_DOWN = 0.6
+CVR_RATIO_UP = 1.5
+# Calibrated by simulating NO change (binomial noise, rate estimated from 56 reference days,
+# 20-120 clicks/day): false alarm <= 3% / <= 0.5% per campaign and direction per 14-day window.
+CVR_H_WATCH = 4.7
+CVR_H_ALERT = 6.7
+
+# CPC and spend (Gaussian CUSUM on standardised logs, slack k=0.5 sigma). Calibrated the same way
+# with a MAD scale from 56 days and heavy-tailed (t5) noise, the conservative case.
+GAUSS_K = 0.5
+GAUSS_H_WATCH = 7.0
+GAUSS_H_ALERT = 10.5
+
 # Default dashboard window.
 DEFAULT_WINDOW_DAYS = 28

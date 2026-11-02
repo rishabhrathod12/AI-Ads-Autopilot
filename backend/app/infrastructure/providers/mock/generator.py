@@ -109,6 +109,9 @@ class GroundTruth:
     budget_capped_campaign_ids: frozenset[str]
     anomaly_campaign_ids: frozenset[str]
     anomaly_start: date
+    # Each search term's latent conversion rate (fraction), before promo/anomaly multipliers.
+    # Lets evaluations ask "does this flagged term truly convert well?". Mock-only.
+    term_true_cvr: dict[str, float]
 
 
 @dataclass(frozen=True)
@@ -452,6 +455,7 @@ def generate(cfg: MockConfig) -> GeneratedData:
             campaigns[c].external_id for c in range(C) if roles[c] == "anomaly"
         ),
         anomaly_start=dates[anomaly_idx],
+        term_true_cvr={term_models[s].external_id: float(cvr[s]) for s in range(S)},
     )
     return GeneratedData(
         profile=profile,

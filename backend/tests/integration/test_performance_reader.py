@@ -207,3 +207,55 @@ async def test_analytics_services_give_identical_results_on_sql_and_in_memory_re
         period = DateRange(END - timedelta(days=20), END)
         assert await campaign_overview(sql, period) == await campaign_overview(fake, period)
         assert await campaign_changes(sql, period) == await campaign_changes(fake, period)
+
+
+async def test_keyword_analysis_and_catalogs_match_between_sql_and_in_memory_readers(
+    engine: AsyncEngine,
+) -> None:
+    from app.application.analytics.keywords import keyword_analysis
+    from tests.unit.fake_reader import FakeReader
+
+    org = await seed_org(engine)
+    fake = FakeReader(PROVIDER.data, org, NOW)
+    async with tenant_session(engine, TenantContext(org), ROLE) as s:
+        sql = reader_for(s, org)
+        assert await sql.targets() == await fake.targets()
+        assert await sql.search_terms() == await fake.search_terms()
+        period = DateRange(END - timedelta(days=28), END)
+        assert await keyword_analysis(sql, period) == await keyword_analysis(fake, period)
+
+
+async def test_catalogs_are_tenant_isolated(engine: AsyncEngine) -> None:
+    org_a, org_b = await seed_org(engine), uuid4()
+    async with tenant_session(engine, TenantContext(org_b), ROLE) as s:
+        s.add(Organization(id=org_b, name="B"))
+        await s.flush()
+        assert await reader_for(s, org_a).targets() == []
+        assert await reader_for(s, org_a).search_terms() == []
+        assert await reader_for(s, org_b).targets() == []
+
+
+async def test_anomaly_report_matches_between_sql_and_in_memory_readers(
+    engine: AsyncEngine,
+) -> None:
+    from app.application.analytics.anomalies import detect_anomalies
+    from tests.unit.fake_reader import FakeReader
+
+    cfg = MockConfig(
+        days=90,
+        end_date=END,
+        n_campaigns=6,
+        ad_groups_per_campaign=2,
+        keywords_per_ad_group=20,
+        now=NOW,
+    )
+    provider = MockAdvertisingDataProvider(cfg)
+    org = uuid4()
+    async with tenant_session(engine, TenantContext(org), ROLE) as s:
+        s.add(Organization(id=org, name="Anomaly parity"))
+        await s.flush()
+        await SyncService(provider, SqlAdsStore(s, org)).sync(END - timedelta(days=89), END)
+        sql_report = await detect_anomalies(reader_for(s, org))
+    fake_report = await detect_anomalies(FakeReader(provider.data, org, NOW))
+    assert sql_report == fake_report
+    assert sql_report.skipped == []  # 90 days is enough history to monitor every campaign

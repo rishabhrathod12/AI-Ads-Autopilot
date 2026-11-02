@@ -64,12 +64,41 @@ class CampaignInfo:
     data_source: DataSource
 
 
+@dataclass(frozen=True)
+class TargetInfo:
+    """A keyword or auto-targeting group, with its place in the hierarchy."""
+
+    id: UUID
+    external_id: str
+    ad_group_id: UUID
+    campaign_id: UUID
+    text: str
+    match_type: str
+    bid_paise: int
+    state: str
+    is_negative: bool
+
+
+@dataclass(frozen=True)
+class SearchTermInfo:
+    id: UUID
+    external_id: str
+    ad_group_id: UUID
+    campaign_id: UUID
+    target_id: UUID | None
+    term: str
+
+
 class PerformanceReader(Protocol):
     async def freshness(self) -> Freshness: ...
 
     async def provenance(self, period: DateRange) -> Provenance: ...
 
     async def campaigns(self) -> list[CampaignInfo]: ...
+
+    async def targets(self) -> list[TargetInfo]: ...
+
+    async def search_terms(self) -> list[SearchTermInfo]: ...
 
     async def daily_totals(
         self,
