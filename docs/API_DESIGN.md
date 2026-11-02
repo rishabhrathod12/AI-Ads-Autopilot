@@ -33,3 +33,33 @@ Events: `plan`, `tool_call`, `tool_result`, `token`, `final` (with evidence refs
 
 ## 5. Execution endpoint rules
 `approve` records the decision only. Execution happens in a separate gated service and returns `409` if execution is disabled, the recommendation expired, or its `content_hash` changed since approval.
+
+## Implemented (M3): analytics endpoints
+
+Read-only unless noted. Base path `/api/v1`. **Development tenancy:** send `X-Dev-Org-Id: <organization uuid>`
+([ADR 0014](ADR/0014-dev-tenant-header-and-production-refusal.md)); production refuses to start until real
+authentication exists. Optional `from` / `to` (inclusive dates; default: last 28 days, max 366).
+
+| Endpoint | Returns |
+|---|---|
+| `GET /dashboard/summary` | totals, KPIs, immature-day count, mature-aligned comparison with the previous period, ACOS driver breakdown |
+| `GET /dashboard/trends` | daily points with totals, KPIs and `is_mature` |
+| `GET /campaigns?target_acos=` | per-campaign KPIs, health status, budget use, spend distribution |
+| `GET /campaigns/changes` | per-campaign current vs previous KPIs with the ACOS driver breakdown |
+| `GET /keywords?sort=&limit=` | target performance table (`sort`: spend, sales, clicks, orders, acos) |
+| `GET /search-terms?sort=&limit=` | search-term performance table |
+| `GET /keywords/findings?target_acos=&limit=` | wasted targets, underperformers, negative-keyword candidates, opportunities (+ full counts) |
+| `GET /anomalies` | conversion-rate / CPC / spend episodes over the last 14 mature days |
+| `POST /forecasts/account` | backtest, select and **store** a 14-day spend and sales forecast (takes several seconds); 201 |
+| `GET /forecasts/account` | latest stored forecast with derived ACOS; 404 if none |
+
+Conventions in force:
+
+- Response envelope `{"meta": {...}, "data": {...}}`. `meta` has `data_sources`, `synthetic`, a MOCK `notice`,
+  `as_of`, `latest_date` and `mature_through`.
+- Money is integer paise; ratios and percentages are numbers rounded to 4 places; **undefined ratios are `null`**.
+- Errors are RFC 7807 problem details; the message is in `title` for HTTP errors. 401 missing/invalid tenant header,
+  404 no data, 422 invalid parameters or a period with no mature days or too little history to forecast, 503 no database.
+- Response bodies are serialised generically (the OpenAPI document does not yet describe the `data` shapes in
+  detail); typed response models are planned with the frontend.
+- Not implemented yet: campaign-level forecast endpoints, report downloads, assistant, approvals, sync triggers.

@@ -3,7 +3,8 @@
 AI-powered Amazon PPC (Sponsored Products) analysis and optimization platform.
 Agentic AI + Generative AI + Machine Learning, built as a portfolio project with a path to a multi-tenant SaaS.
 
-> **Status: M2 (mock data layer) implemented. No analytics, AI or ML features yet.**
+> **Status: M3 (analytics and forecasting API) implemented; some accuracy checks failed and are documented.**
+> No LLM, agents, approval workflow or Amazon connectivity yet.
 > **Data: MOCK only.** No Amazon Ads API connection exists or is simulated. Synthetic data is always labeled `MOCK`.
 > **Safety: `AD_EXECUTION_ENABLED=false`.** No advertising changes are ever made without explicit human approval.
 
@@ -27,6 +28,8 @@ Dashboard KPIs, campaign and keyword intelligence, wasted-spend and negative-key
 | [docs/API_DESIGN.md](docs/API_DESIGN.md) | REST API conventions and endpoints |
 | [docs/SECURITY.md](docs/SECURITY.md) | Threat model and safeguards |
 | [docs/MOCK_DATA.md](docs/MOCK_DATA.md) | Synthetic data model and planted scenarios |
+| [docs/ANALYTICS.md](docs/ANALYTICS.md) | KPI rules, findings, anomalies, forecasting |
+| [docs/ML_EVALUATION.md](docs/ML_EVALUATION.md) | Held-out results, including failures |
 | [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | Milestones M1-M9 |
 | [docs/ADR/](docs/ADR/) | Architecture decision records |
 
@@ -70,6 +73,15 @@ TEST_DATABASE_URL=postgresql+asyncpg://USER:PASSWORD@localhost:5432/adpilot_test
 cd frontend && npm run lint && npm run typecheck && npm test && npm run build
 ```
 The RLS tests recreate the schema (`alembic downgrade base` then `upgrade head`): use a dedicated test database.
+
+## Running the analytics API locally (M3)
+```
+cd backend && .venv/Scripts/uvicorn app.api.asgi:app --port 8010       # use a port not taken by other projects
+python -m app.cli seed-mock                                          # ~3 min, needs DATABASE_URL + alembic upgrade head
+curl -H "X-Dev-Org-Id: <org uuid printed by seed-mock>" http://127.0.0.1:8010/api/v1/dashboard/summary
+```
+The tenant header is **development only**; production refuses to start until real authentication exists.
+Slow accuracy evaluations are excluded from the default test run: `pytest -m eval tests/evals -s`.
 
 ## Workflow
 Milestone-gated. Each milestone needs explicit owner approval before the next begins.
