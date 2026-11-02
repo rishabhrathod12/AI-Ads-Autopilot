@@ -15,5 +15,7 @@ class Settings(BaseSettings):
     ad_execution_enabled: bool = False
     database_url: SecretStr | None = None
     db_app_role: str | None = None
+    mock_seed: int = 42
+    mock_history_days: int = 120
     log_level: str = "INFO"
     cors_origins: list[str] = ["http://localhost:5173"]

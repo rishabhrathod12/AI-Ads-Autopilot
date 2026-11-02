@@ -7,6 +7,7 @@ from alembic import context
 from sqlalchemy.engine import Connection
 
 from app.config import Settings
+from app.infrastructure.db import ads_models  # noqa: F401  (registers tables on Base.metadata)
 from app.infrastructure.db.models import Base
 from app.infrastructure.db.session import create_engine
 

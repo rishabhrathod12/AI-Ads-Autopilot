@@ -21,10 +21,10 @@ Milestone-gated: each milestone needs explicit owner approval before the next st
 ## M0 – Planning (COMPLETE)
 Docs + ADRs + repo skeleton. **Exit:** owner written approval; M1 startable with no blocking questions.
 
-## M1 – Foundation
+## M1 – Foundation (COMPLETE)
 Backend/frontend scaffolds, config (Pydantic settings), structured logging, Postgres + Alembic, Docker Compose, CI (Ruff, mypy strict, pytest, ESLint, gitleaks), startup safety check for `AD_EXECUTION_ENABLED`. **Exit:** CI green; health endpoint; empty migration with orgs/users/memberships + RLS and a cross-tenant test.
 
-## M2 – Mock Advertising Data
+## M2 – Mock Advertising Data (IMPLEMENTED, pending owner review; see docs/MOCK_DATA.md)
 Domain models, `AdvertisingDataProvider`, `MockAdvertisingDataProvider` (seeded, realistic distributions, MOCK labels), validation, sync job, contract tests. **Exit:** reproducible dataset; provider swap via config; mock execute raises.
 
 ## M3 – PPC Analytics and ML

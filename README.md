@@ -3,7 +3,7 @@
 AI-powered Amazon PPC (Sponsored Products) analysis and optimization platform.
 Agentic AI + Generative AI + Machine Learning, built as a portfolio project with a path to a multi-tenant SaaS.
 
-> **Status: M1 (foundation) implemented. No advertising features yet.**
+> **Status: M2 (mock data layer) implemented. No analytics, AI or ML features yet.**
 > **Data: MOCK only.** No Amazon Ads API connection exists or is simulated. Synthetic data is always labeled `MOCK`.
 > **Safety: `AD_EXECUTION_ENABLED=false`.** No advertising changes are ever made without explicit human approval.
 
@@ -26,6 +26,7 @@ Dashboard KPIs, campaign and keyword intelligence, wasted-spend and negative-key
 | [docs/DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md) | Schema, tenancy, provenance |
 | [docs/API_DESIGN.md](docs/API_DESIGN.md) | REST API conventions and endpoints |
 | [docs/SECURITY.md](docs/SECURITY.md) | Threat model and safeguards |
+| [docs/MOCK_DATA.md](docs/MOCK_DATA.md) | Synthetic data model and planted scenarios |
 | [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | Milestones M1-M9 |
 | [docs/ADR/](docs/ADR/) | Architecture decision records |
 
@@ -55,6 +56,11 @@ alembic upgrade head
 uvicorn app.api.asgi:app --reload
 
 cd ../frontend && npm install && npm run dev        # http://localhost:5173
+```
+
+**Load demo MOCK data** (after `alembic upgrade head`; ~3 min for 120 days on a Windows dev machine)
+```
+cd backend && python -m app.cli seed-mock
 ```
 
 **Quality checks**

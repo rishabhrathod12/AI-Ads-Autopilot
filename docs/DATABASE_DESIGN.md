@@ -49,3 +49,10 @@ Global knowledge documents (`organization_id IS NULL`) are readable by all, writ
 
 ## 6. Migrations
 Alembic only; no manual DDL; every migration reviewed; RLS policies are part of migrations and covered by cross-tenant tests.
+
+## 7. Implemented so far
+- M1: `organizations`, `users`, `memberships`, `audit_logs` (insert-only), RLS (`0001`).
+- M2: `seller_accounts`, `advertising_profiles`, `campaigns`, `ad_groups`, `keywords_targets`, `search_terms`,
+  `report_runs`, `performance_daily` (`0002`). All have RLS; the app role has no DELETE. Internal ids are deterministic
+  `uuid5(organization_id, kind:external_id)`, which makes syncs idempotent without lookups. `performance_daily` uses a
+  composite primary key `(organization_id, entity_type, entity_id, date)` and CHECK constraints for metric invariants.
