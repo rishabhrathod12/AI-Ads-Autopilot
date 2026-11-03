@@ -133,6 +133,17 @@ same data, model and checks as the baseline. Prompts for the graph had never bee
 - **Next measurements:** store validator violations in the harness, and run R3-style forecast questions through the
   single assistant for comparison.
 
+### Diagnostic: why forecast questions end `unverified` (not a scored evaluation)
+
+The harness now stores validator violations (`backend/tests/evals/diag_forecast.py`, 3 forecast paraphrases on both
+engines, $0.013). **The single assistant fails these too (3/3 unverified), so R3 is not a graph weakness.**
+The evaluation data has no stored forecast, so the honest answer is "no forecast exists". Observed violations:
+`unsupported_number: 14` and `unsupported_number: two`, i.e. the validator rejects a number or number-word the model
+repeated from the QUESTION ("next two weeks", "14 days"); and in one graph run an uncited sentence containing "two
+weeks". Three graph runs ended `unverified` with no recorded violation, so a second cause (no `final_answer` or an
+invalid one) is possible and unexamined. Candidate fix, **not made** (it changes the ADR 0015 guarantee, so needs a
+decision): treat numbers that appear in the seller's own question as echoed, not as claims.
+
 ## Known gaps and next steps
 
 - Wider paraphrased test sets (the held-out set above is small); name-attribution is fixed on that sample only.

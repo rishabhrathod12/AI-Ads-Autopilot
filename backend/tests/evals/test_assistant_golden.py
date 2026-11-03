@@ -393,6 +393,7 @@ async def run_all(
                 "note": run_note,
                 "plan": plan,
                 "llm_calls": run.llm_calls,
+                "violations": [f"{v.kind}: {v.text} ({v.detail})" for v in run.violations],
             }
         )
         if spent >= ceiling:
