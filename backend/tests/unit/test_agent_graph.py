@@ -210,3 +210,48 @@ async def test_two_specialists_share_evidence_ids_and_the_call_cache(data: Gener
 async def test_token_usage_is_summed_across_nodes(data: GeneratedData) -> None:
     result, _ = await ask([plan_reply(), final(("I cannot make changes.", []))], data)
     assert result.run.input_tokens == 200
+
+
+async def test_the_routing_decision_is_recorded_in_the_trace(data: GeneratedData) -> None:
+    script = [
+        plan_reply("campaign_analysis", "performance_prediction"),
+        done(),
+        done(),
+        final(("Nothing to report.", [])),
+    ]
+    result, _ = await ask(script, data)
+    route = [s for s in result.run.steps if s.kind == "route"]
+    assert [(s.name, s.detail, s.ok) for s in route] == [
+        ("supervisor", "campaign_analysis,performance_prediction", True)
+    ]
+
+
+async def test_an_unusable_plan_is_marked_in_the_trace(data: GeneratedData) -> None:
+    script = [text_reply("nope"), done(), done(), done(), final(("Nothing found.", []))]
+    result, _ = await ask(script, data)
+    names = [(s.name, s.ok) for s in result.run.steps if s.kind == "route"]
+    assert names == [("supervisor.plan_fallback", False), ("supervisor", False)]
+
+
+async def test_a_graph_run_is_stored_with_its_routing(data: GeneratedData) -> None:
+    from decimal import Decimal
+
+    from app.application.assistant.service import AssistantService
+    from app.application.llm.cost import Pricing
+    from tests.unit.memory_assistant_store import MemoryAssistantStore
+
+    store = MemoryAssistantStore()
+    svc = AssistantService(
+        ScriptedLLM([plan_reply(), final(("I cannot make changes.", []))]),
+        ToolContext(FakeReader(data, ORG, NOW), NoForecasts()),
+        store,
+        Pricing(Decimal(2), Decimal(8)),
+        engine="graph",
+    )
+    thread = await svc.start_thread("t")
+    _, run_id = await svc.ask(thread, "Delete my worst campaign.")
+    stored = await store.get_run(run_id)
+    assert stored is not None
+    assert [(s["kind"], s["detail"]) for s in stored.trace if s["kind"] == "route"] == [
+        ("route", "none")
+    ]

@@ -110,7 +110,7 @@ class StepRecord:
     """One entry in the run trace. Never holds prompt text, only what happened."""
 
     index: int
-    kind: Literal["llm", "tool", "validation"]
+    kind: Literal["llm", "tool", "validation", "route"]
     name: str
     detail: str = ""
     ok: bool = True
@@ -157,7 +157,7 @@ class RunState:
 
     def step(
         self,
-        kind: Literal["llm", "tool", "validation"],
+        kind: Literal["llm", "tool", "validation", "route"],
         name: str,
         *,
         detail: str = "",

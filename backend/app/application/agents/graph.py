@@ -185,9 +185,15 @@ class GraphRun:
             # An unusable plan must not lose the question: run everything, and say so in the trace.
             self.plan_fallback = True
             plan = Plan(specialists=list(SPECIALIST_NAMES), rationale="fallback: plan unusable")
-            self.state.step("llm", "supervisor.plan_fallback", ok=False)
+            self.state.step("route", "supervisor.plan_fallback", ok=False)
         plan = plan.model_copy(update={"specialists": list(dict.fromkeys(plan.specialists))})
         self.plan = plan
+        self.state.step(
+            "route",
+            "supervisor",
+            detail=",".join(plan.specialists) or "none",
+            ok=not self.plan_fallback,
+        )
         return {"pending": list(plan.specialists)}
 
     async def specialist_node(self, state: GraphState) -> GraphState:
