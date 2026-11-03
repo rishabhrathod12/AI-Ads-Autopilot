@@ -253,7 +253,7 @@ CASES: list[Case] = [
         "A",
         "Do I have any negative keyword candidates?",
         lambda r, t: (
-            names_in(r.answer_text, [n.term.text for n in t.findings.negative_candidates[:10]])
+            names_in(r.answer_text, [n.term.term for n in t.findings.negative_candidates[:10]])
             if t.findings.negative_candidates
             else lacks(r, t)
         ),
@@ -423,7 +423,7 @@ def report(outcome: Outcome) -> None:
     for r in outcome.records:
         if not r["passed"]:
             print(f"FAIL {r['id']} [{r['status']}] {r['question']}")
-            print(f"     -> {r['answer'][:300]!r}")
+            print(f"     -> {r['answer'][:300]!a}")
 
 
 def test_a_account_facts_are_correct(outcome: Outcome) -> None:
