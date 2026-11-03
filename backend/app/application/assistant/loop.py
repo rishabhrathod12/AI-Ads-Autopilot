@@ -143,7 +143,7 @@ class AssistantRun:
 
 
 @dataclass
-class _State:
+class RunState:
     messages: list[Message]
     runner: ToolRunner
     steps: list[StepRecord] = field(default_factory=list)
@@ -198,8 +198,8 @@ def render(claims: Sequence[Claim], caveats: Sequence[str], notes: Sequence[str]
     return "\n".join(parts)
 
 
-def _finish(
-    state: _State,
+def finish_run(
+    state: RunState,
     question: str,
     status: Status,
     *,
@@ -244,14 +244,14 @@ def _finish(
     )
 
 
-def _salvage(draft: DraftAnswer, evidence: Sequence[Evidence]) -> tuple[list[Claim], list[str]]:
+def salvage(draft: DraftAnswer, evidence: Sequence[Evidence]) -> tuple[list[Claim], list[str]]:
     """Keep the claims and caveats that verify on their own."""
     kept = [c for c in draft.claims if validate_answer(DraftAnswer((c,)), evidence).ok]
     caveats = [c for c in draft.caveats if validate_answer(DraftAnswer((), (c,)), evidence).ok]
     return kept, caveats
 
 
-def _reply(call: ToolCall, text: str) -> Message:
+def reply_message(call: ToolCall, text: str) -> Message:
     return Message("tool", text, tool_call_id=call.id)
 
 
@@ -269,7 +269,7 @@ async def run_assistant(
     messages = [Message("system", SYSTEM_PROMPT)]
     messages += [Message(role, text) for role, text in history]
     messages.append(Message("user", question))
-    state = _State(messages, ToolRunner(ctx, max_calls=max_tool_calls))
+    state = RunState(messages, ToolRunner(ctx, max_calls=max_tool_calls))
     tools = [*tool_specs(knowledge=ctx.has_knowledge), final_answer_spec()]
 
     while state.llm_calls < max_llm_calls:
@@ -279,13 +279,13 @@ async def run_assistant(
                 state.messages, tools=tools, max_output_tokens=max_output_tokens, temperature=0.0
             )
         except LLMBudgetExceededError:
-            return _finish(state, question, Status.BUDGET_EXCEEDED)
+            return finish_run(state, question, Status.BUDGET_EXCEEDED)
         except LLMNotConfiguredError:
-            return _finish(state, question, Status.NOT_CONFIGURED)
+            return finish_run(state, question, Status.NOT_CONFIGURED)
         except (LLMUnavailableError, LLMRateLimitedError):
-            return _finish(state, question, Status.LLM_UNAVAILABLE)
+            return finish_run(state, question, Status.LLM_UNAVAILABLE)
         except (LLMAuthError, LLMBadRequestError, LLMResponseError):
-            return _finish(state, question, Status.LLM_ERROR)
+            return finish_run(state, question, Status.LLM_ERROR)
 
         state.llm_calls += 1
         state.model = response.model or state.model
@@ -304,19 +304,19 @@ async def run_assistant(
         if outcome is not None:
             return outcome
 
-    return _finish(state, question, Status.STEP_LIMIT, violations=state.last_violations)
+    return finish_run(state, question, Status.STEP_LIMIT, violations=state.last_violations)
 
 
 async def _handle(
-    state: _State, response: LLMResponse, question: str, max_retries: int
+    state: RunState, response: LLMResponse, question: str, max_retries: int
 ) -> AssistantRun | None:
     """Process one model response. Returns the finished run, or None to keep looping."""
     if response.finish_reason == "content_filter":
-        return _finish(state, question, Status.REFUSED)
+        return finish_run(state, question, Status.REFUSED)
     calls = response.message.tool_calls
     if not calls:  # plain text: never shown
         if state.text_nudges >= 1:
-            return _finish(state, question, Status.UNVERIFIED)
+            return finish_run(state, question, Status.UNVERIFIED)
         state.text_nudges += 1
         state.messages.append(Message("user", NUDGE))
         return None
@@ -326,7 +326,7 @@ async def _handle(
         if call.name == FINAL_TOOL:
             continue
         result = await state.runner.run(call)
-        state.messages.append(_reply(call, result.to_model_text()))
+        state.messages.append(reply_message(call, result.to_model_text()))
         ok = not isinstance(result, ToolError)
         state.step(
             "tool",
@@ -340,11 +340,13 @@ async def _handle(
     first, extras = final_calls[0], final_calls[1:]
     for extra in extras:
         state.messages.append(
-            _reply(extra, ToolError("duplicate_final", "Call final_answer once.").to_model_text())
+            reply_message(
+                extra, ToolError("duplicate_final", "Call final_answer once.").to_model_text()
+            )
         )
     if len(calls) > len(final_calls):
         state.messages.append(
-            _reply(
+            reply_message(
                 first,
                 ToolError(
                     "final_answer_too_early",
@@ -353,11 +355,11 @@ async def _handle(
             )
         )
         return None
-    return _check_final(state, first, question, max_retries)
+    return check_final(state, first, question, max_retries)
 
 
-def _check_final(
-    state: _State, call: ToolCall, question: str, max_retries: int
+def check_final(
+    state: RunState, call: ToolCall, question: str, max_retries: int
 ) -> AssistantRun | None:
     try:
         args = FinalAnswerArgs.model_validate(call.arguments)
@@ -368,9 +370,9 @@ def _check_final(
         state.validation_attempts += 1
         state.step("validation", "schema", detail=problems[:200], ok=False)
         if state.validation_attempts > max_retries:
-            return _finish(state, question, Status.UNVERIFIED)
+            return finish_run(state, question, Status.UNVERIFIED)
         state.messages.append(
-            _reply(call, ToolError("invalid_arguments", problems).to_model_text())
+            reply_message(call, ToolError("invalid_arguments", problems).to_model_text())
         )
         return None
 
@@ -389,7 +391,7 @@ def _check_final(
         ok=result.ok,
     )
     if result.ok:
-        return _finish(
+        return finish_run(
             state,
             question,
             Status.ANSWERED,
@@ -401,12 +403,12 @@ def _check_final(
     state.validation_attempts += 1
     state.last_violations = result.violations
     if state.validation_attempts <= max_retries:
-        state.messages.append(_reply(call, correction_message(result)))
+        state.messages.append(reply_message(call, correction_message(result)))
         return None
 
-    kept, caveats = _salvage(draft, evidence)
+    kept, caveats = salvage(draft, evidence)
     if kept:
-        return _finish(
+        return finish_run(
             state,
             question,
             Status.PARTIAL,
@@ -416,4 +418,4 @@ def _check_final(
             dropped=len(draft.claims) - len(kept),
             violations=result.violations,
         )
-    return _finish(state, question, Status.UNVERIFIED, violations=result.violations)
+    return finish_run(state, question, Status.UNVERIFIED, violations=result.violations)
