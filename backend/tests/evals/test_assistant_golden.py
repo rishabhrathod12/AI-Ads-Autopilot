@@ -327,7 +327,6 @@ CASES: list[Case] = [
 
 async def run_all(
     cases: list[Case] | None = None,
-    results: Path = RESULTS,
     ceiling: Decimal = COST_CEILING,
 ) -> "Outcome":
     settings = Settings().model_copy(
@@ -388,10 +387,6 @@ async def run_all(
         )
         if spent >= ceiling:
             break
-    results.parent.mkdir(exist_ok=True)
-    results.write_text(
-        json.dumps({"total_cost_usd": str(spent), "cases": records}, indent=1), encoding="utf-8"
-    )
     return Outcome(records, spent)
 
 
@@ -401,11 +396,18 @@ class Outcome:
     spent: Decimal
 
 
+def save(outcome: Outcome, path: Path) -> Outcome:
+    path.parent.mkdir(exist_ok=True)
+    body = {"total_cost_usd": str(outcome.spent), "cases": outcome.records}
+    path.write_text(json.dumps(body, indent=1), encoding="utf-8")
+    return outcome
+
+
 @pytest.fixture(scope="module")
 def outcome() -> Outcome:
     if os.environ.get("RUN_LLM_EVAL") != "1":
         pytest.skip("set RUN_LLM_EVAL=1 to run the live-model evaluation (costs real money)")
-    return asyncio.run(run_all())
+    return save(asyncio.run(run_all()), RESULTS)
 
 
 def passed(outcome: Outcome, g: str) -> tuple[int, int]:

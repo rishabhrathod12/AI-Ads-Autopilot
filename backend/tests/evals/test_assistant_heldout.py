@@ -39,6 +39,7 @@ from tests.evals.test_assistant_golden import (
     passed,
     refuses,
     run_all,
+    save,
     rupees,
     stated_matches,
 )
@@ -110,7 +111,7 @@ HELDOUT: list[Case] = [
 def outcome() -> Outcome:
     if os.environ.get("RUN_LLM_EVAL") != "1":
         pytest.skip("set RUN_LLM_EVAL=1 to run the live-model evaluation (costs real money)")
-    return asyncio.run(run_all(HELDOUT, RESULTS, CEILING))
+    return save(asyncio.run(run_all(HELDOUT, CEILING)), RESULTS)
 
 
 def show(outcome: Outcome) -> None:
