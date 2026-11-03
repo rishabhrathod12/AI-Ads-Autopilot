@@ -3,8 +3,8 @@
 AI-powered Amazon PPC (Sponsored Products) analysis and optimization platform.
 Agentic AI + Generative AI + Machine Learning, built as a portfolio project with a path to a multi-tenant SaaS.
 
-> **Status: M3 (analytics and forecasting API) implemented; some accuracy checks failed and are documented.**
-> No LLM, agents, approval workflow or Amazon connectivity yet.
+> **Status: M4 (grounded single assistant with RAG) implemented; M3 accuracy checks that failed are documented.**
+> No multi-agent graph (M5), approval workflow or Amazon connectivity yet.
 > **Data: MOCK only.** No Amazon Ads API connection exists or is simulated. Synthetic data is always labeled `MOCK`.
 > **Safety: `AD_EXECUTION_ENABLED=false`.** No advertising changes are ever made without explicit human approval.
 
@@ -30,6 +30,7 @@ Dashboard KPIs, campaign and keyword intelligence, wasted-spend and negative-key
 | [docs/MOCK_DATA.md](docs/MOCK_DATA.md) | Synthetic data model and planted scenarios |
 | [docs/ANALYTICS.md](docs/ANALYTICS.md) | KPI rules, findings, anomalies, forecasting |
 | [docs/ML_EVALUATION.md](docs/ML_EVALUATION.md) | Held-out results, including failures |
+| [docs/ASSISTANT.md](docs/ASSISTANT.md) | Grounded assistant, validator, golden and held-out evaluations |
 | [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | Milestones M1-M9 |
 | [docs/ADR/](docs/ADR/) | Architecture decision records |
 

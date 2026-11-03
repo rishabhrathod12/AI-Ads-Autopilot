@@ -27,9 +27,9 @@ Backend/frontend scaffolds, config (Pydantic settings), structured logging, Post
 ## M2 – Mock Advertising Data (IMPLEMENTED, pending owner review; see docs/MOCK_DATA.md)
 Domain models, `AdvertisingDataProvider`, `MockAdvertisingDataProvider` (seeded, realistic distributions, MOCK labels), validation, sync job, contract tests. **Exit:** reproducible dataset; provider swap via config; mock execute raises.
 
-## M3 – PPC Analytics and ML (IMPLEMENTED, steps 1-8; step 9 optional UI not started)
+## M3 – PPC Analytics and ML (IMPLEMENTED, steps 1-9 incl. dashboard UI)
 Steps: (1) KPI engine, (2) tenant-scoped analytics reader, (3) dashboard and campaign analytics, (4) keyword and
-search-term findings, (5) anomaly detection, (6) forecasting + `forecast_runs`, (7) read-only API, (8) docs.
+search-term findings, (5) anomaly detection, (6) forecasting + `forecast_runs`, (7) read-only API, (8) docs, (9) dashboard UI.
 See [ANALYTICS.md](ANALYTICS.md) and [ML_EVALUATION.md](ML_EVALUATION.md). **Exit status: not fully met.**
 
 - Pre-registered held-out checks that **failed** (recorded as strict known failures, not adjusted): keyword waste
@@ -38,12 +38,12 @@ See [ANALYTICS.md](ANALYTICS.md) and [ML_EVALUATION.md](ML_EVALUATION.md). **Exi
 - **Not verified:** analytics query timing (< 1 s on the 646k-row seed) and the `EXPLAIN` index review; the Docker Compose stack.
 - **Verified in CI:** backend (full suite incl. Postgres RLS tests; 306 tests pass locally), frontend and gitleaks jobs on `2d1a1bd`. The first run on `2048180` failed only in the gitleaks job (cause unconfirmed; a local gitleaks scan of all history found no leaks).
 - Owner decisions pending: how to treat the three failed checks (re-state criteria and validate on fresh seeds, change
-  rules, or accept); whether to build the optional minimal UI (step 9) before M4.
+  rules, or accept).
 
-## M4 – GenAI and RAG
-`LLMClient`, tool calling over analytics, pgvector knowledge base with source attribution, single assistant. **Exit:** golden Q&A with traceable numbers.
+## M4 – GenAI and RAG (IMPLEMENTED, pending owner review; see docs/ASSISTANT.md)
+`LLMClient` port with cost caps, read-only tool calling over analytics, pgvector knowledge base, code-based faithfulness validator, chat API and UI. **Exit:** golden Q&A with traceable numbers: met on the pre-registered counts; run 2 followed a prompt change and is not held-out; a 12-question held-out check passed (all criteria, $0.031). Known gaps listed in ASSISTANT.md.
 
-## M5 – Multi-Agent System
+## M5 – Multi-Agent System (IN PROGRESS; scope in ADR 0018)
 LangGraph graph, typed state, specialists, Validator, checkpointing. **Exit:** routing and faithfulness evals pass.
 
 ## M6 – Optimization and Approval
