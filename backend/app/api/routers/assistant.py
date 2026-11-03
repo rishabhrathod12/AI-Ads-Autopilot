@@ -87,7 +87,9 @@ async def get_assistant(
                 knowledge,
                 embedder,
             )
-            return AssistantService(llm, ctx, store, pricing_of(settings))
+            return AssistantService(
+                llm, ctx, store, pricing_of(settings), engine=settings.assistant_engine
+            )
 
         yield AssistantDeps(org, store, make_service)
 

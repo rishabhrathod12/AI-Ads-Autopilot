@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     llm_max_retries: int = 3
     # Hard per-organization caps; calls that could breach them are refused before being made.
     assistant_questions_per_minute: int = 10  # per tenant, per process
+    # "single" = M4 tool-calling assistant (default); "graph" = M5 supervisor/specialist graph.
+    assistant_engine: Literal["single", "graph"] = "single"
     llm_daily_cap_usd: Decimal = Decimal("1")
     llm_monthly_cap_usd: Decimal = Decimal("5")
     # --- Knowledge retrieval (M4). "hashing" is an offline stand-in for development and tests only.

@@ -157,3 +157,9 @@ async def test_llm_check_never_prints_a_secret_the_model_echoes() -> None:
         ScriptedLLM([text_reply("OK sk-proj-abcdefgh12345678")]), Pricing(D(1), D(1))
     )
     assert "sk-proj" not in "\n".join(lines)
+
+
+def test_assistant_engine_defaults_to_the_single_assistant() -> None:
+    from app.config import Settings
+
+    assert Settings(_env_file=None).assistant_engine == "single"

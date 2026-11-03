@@ -1,8 +1,10 @@
 """AssistantService: one conversational turn, with history, redaction and persistence."""
 
 from decimal import Decimal
+from typing import Literal
 from uuid import UUID
 
+from app.application.agents.graph import run_agents
 from app.application.assistant.loop import AssistantRun, run_assistant
 from app.application.assistant.tools import ToolContext
 from app.application.llm.cost import Pricing
@@ -29,11 +31,13 @@ class AssistantService:
         ctx: ToolContext,
         store: AssistantStore,
         pricing: Pricing | None = None,
+        engine: Literal["single", "graph"] = "single",
     ) -> None:
         self._llm = llm
         self._ctx = ctx
         self._store = store
         self._pricing = pricing
+        self._engine = engine
 
     async def start_thread(self, title: str) -> UUID:
         return await self._store.create_thread(redact(title.strip())[:200] or "Conversation")
@@ -54,7 +58,10 @@ class AssistantService:
             (msg.role, msg.content)
             for msg in await self._store.messages(thread_id, HISTORY_MESSAGES)
         ]
-        run = await run_assistant(self._llm, self._ctx, cleaned, history=history)
+        if self._engine == "graph":
+            run = (await run_agents(self._llm, self._ctx, cleaned, history=history)).run
+        else:
+            run = await run_assistant(self._llm, self._ctx, cleaned, history=history)
         cost = (
             self._pricing.cost(Usage(run.input_tokens, run.output_tokens))
             if self._pricing

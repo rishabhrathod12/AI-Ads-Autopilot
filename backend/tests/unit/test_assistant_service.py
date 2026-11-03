@@ -220,3 +220,29 @@ async def test_thread_titles_are_redacted_and_never_empty(data: GeneratedData) -
     blank = await svc.start_thread("   ")
     assert "sk-abcdefgh" not in store.threads[secret]
     assert store.threads[blank] == "Conversation"
+
+
+async def test_the_graph_engine_answers_and_persists_the_same_way(data: GeneratedData) -> None:
+    plan = LLMResponse(
+        Message("assistant", '{"specialists":["campaign_analysis"],"rationale":"kpis"}'),
+        Usage(100, 20),
+        "scripted",
+        "stop",
+    )
+    done = LLMResponse(Message("assistant", "done"), Usage(100, 2), "scripted", "stop")
+    store = MemoryAssistantStore()
+    svc = AssistantService(
+        ScriptedLLM([plan, summary(), done, answer_from_evidence]),
+        ToolContext(FakeReader(data, ORG, NOW), NoForecasts()),
+        store,
+        Pricing(Decimal(2), Decimal(8)),
+        engine="graph",
+    )
+    thread = await svc.start_thread("My account")
+    run, run_id = await svc.ask(thread, "How is my ACOS?")
+
+    assert run.status is Status.ANSWERED
+    stored = await store.get_run(run_id)
+    assert stored is not None
+    assert [e["id"] for e in stored.evidence] == ["ev_1"]
+    assert next(s["name"] for s in stored.trace if s["kind"] == "llm") == "supervisor.plan"
