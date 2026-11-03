@@ -51,6 +51,7 @@ from uuid import UUID
 
 import pytest
 
+from app.application.agents.graph import run_agents
 from app.application.analytics.campaigns import campaign_overview
 from app.application.analytics.dashboard import dashboard_summary
 from app.application.analytics.keyword_tables import target_table
@@ -328,6 +329,7 @@ CASES: list[Case] = [
 async def run_all(
     cases: list[Case] | None = None,
     ceiling: Decimal = COST_CEILING,
+    engine: str = "single",
 ) -> "Outcome":
     settings = Settings().model_copy(
         update={"llm_daily_cap_usd": ceiling, "llm_monthly_cap_usd": ceiling}
@@ -360,7 +362,13 @@ async def run_all(
     spent = Decimal(0)
     for case in cases or CASES:
         started = time.monotonic()
-        run = await run_assistant(llm, ctx, case.question)
+        plan: dict[str, Any] | None = None
+        if engine == "graph":
+            result = await run_agents(llm, ctx, case.question)
+            run = result.run
+            plan = {"specialists": list(result.plan.specialists), "fallback": result.plan_fallback}
+        else:
+            run = await run_assistant(llm, ctx, case.question)
         cost = pricing.cost(Usage(run.input_tokens, run.output_tokens))
         spent += cost
         try:
@@ -383,6 +391,8 @@ async def run_all(
                 "cost_usd": str(cost),
                 "latency_s": round(time.monotonic() - started, 1),
                 "note": run_note,
+                "plan": plan,
+                "llm_calls": run.llm_calls,
             }
         )
         if spent >= ceiling:

@@ -49,6 +49,7 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
 "tests/unit/test_assistant_service.py" = ["E501"]
 "tests/integration/test_assistant_store.py" = ["E501"]
 "tests/evals/test_assistant_golden.py" = ["E501"]  # one-line case table
+"tests/evals/test_agents_eval.py" = ["E501"]  # one-line routing table
 
 [tool.mypy]
 strict = true
