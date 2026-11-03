@@ -144,6 +144,13 @@ weeks". Three graph runs ended `unverified` with no recorded violation, so a sec
 invalid one) is possible and unexamined. Candidate fix, **not made** (it changes the ADR 0015 guarantee, so needs a
 decision): treat numbers that appear in the seller's own question as echoed, not as claims.
 
+**Fix made (ADR 0019):** unit-less numbers and dates that appear in the seller's current question are no longer
+checked; amounts with a unit still are. Re-check of the same 3 questions on both engines ($0.010): 6/6 `answered` on
+the first draft, where before 6/6 were `unverified`. This is a diagnostic on the questions that exposed the problem,
+not a held-out result, and the earlier three graph runs that ended `unverified` with no recorded violation did not
+recur (cause unknown; model variation is possible). The scored M4 and M5 results above were produced under the
+stricter rule and have not been re-run.
+
 ## Known gaps and next steps
 
 - Wider paraphrased test sets (the held-out set above is small); name-attribution is fixed on that sample only.
