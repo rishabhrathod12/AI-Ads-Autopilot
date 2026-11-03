@@ -13,6 +13,7 @@ dependencies = [
   "alembic>=1.13",
   "structlog>=24.1",
   "numpy>=2.0",
+  "httpx>=0.27",
   "scikit-learn>=1.5",
   "statsmodels>=0.14",
 ]
@@ -21,7 +22,6 @@ dependencies = [
 dev = [
   "pytest>=8",
   "pytest-asyncio>=0.23",
-  "httpx>=0.27",
   "ruff>=0.6",
   "mypy>=1.11",
   "import-linter>=2.0",
@@ -42,7 +42,11 @@ select = ["E", "F", "I", "B", "UP", "SIM", "S", "ASYNC", "RUF"]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101"]
+"tests/**" = ["S101", "RUF001", "RUF003"]  # tests write minus signs, rupees and times signs on purpose
+"tests/unit/test_assistant_faithfulness.py" = ["E501"]  # dense text fixtures
+"tests/unit/test_assistant_loop.py" = ["E501"]  # dense scripted-model fixtures
+"tests/unit/test_assistant_service.py" = ["E501"]
+"tests/integration/test_assistant_store.py" = ["E501"]
 
 [tool.mypy]
 strict = true

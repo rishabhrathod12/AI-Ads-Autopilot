@@ -12,13 +12,16 @@ from sqlalchemy import text
 
 from app.api.errors import problem, register_error_handlers
 from app.api.routers.analytics import router as analytics_router
+from app.api.routers.assistant import router as assistant_router
 from app.config import Settings
 from app.infrastructure.db.session import create_engine
 from app.logging import configure_logging
 from app.startup_checks import (
     ExecutionPrerequisites,
     validate_auth_readiness,
+    validate_embedding_config,
     validate_execution_safety,
+    validate_llm_config,
 )
 
 log = structlog.get_logger()
@@ -31,6 +34,8 @@ def create_app(
     # Fail fast, before anything else starts (ADR 0007).
     validate_execution_safety(settings, prereqs or ExecutionPrerequisites())
     validate_auth_readiness(settings)
+    validate_llm_config(settings)
+    validate_embedding_config(settings)
     configure_logging(settings.log_level)
 
     @asynccontextmanager
@@ -55,7 +60,7 @@ def create_app(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_methods=["GET", "POST"],
-        allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
+        allow_headers=["Authorization", "Content-Type", "X-Request-ID", "X-Dev-Org-Id"],
     )
 
     @app.middleware("http")
@@ -72,6 +77,7 @@ def create_app(
 
     register_error_handlers(app)
     app.include_router(analytics_router)
+    app.include_router(assistant_router)
 
     @app.get("/health")
     async def health() -> dict[str, Any]:

@@ -9,7 +9,9 @@ from sqlalchemy.engine import Connection
 from app.config import Settings
 from app.infrastructure.db import (  # noqa: F401  (register tables on Base.metadata)
     ads_models,
+    assistant_models,
     forecast_models,
+    knowledge_models,
 )
 from app.infrastructure.db.models import Base
 from app.infrastructure.db.session import create_engine

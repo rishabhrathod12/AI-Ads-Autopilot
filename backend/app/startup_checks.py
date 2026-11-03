@@ -31,6 +31,53 @@ def validate_auth_readiness(settings: Settings) -> None:
         )
 
 
+def validate_llm_config(settings: Settings) -> None:
+    """A real LLM provider must come with the means to meter and cap its cost, and a safe URL."""
+    if settings.llm_provider == "none":
+        return
+    problems: list[str] = []
+    if settings.openai_api_key is None:
+        problems.append("OPENAI_API_KEY is not set")
+    if not settings.llm_model:
+        problems.append("LLM_MODEL is not set")
+    if settings.llm_input_usd_per_million is None or settings.llm_output_usd_per_million is None:
+        problems.append(
+            "LLM_INPUT_USD_PER_MILLION and LLM_OUTPUT_USD_PER_MILLION are not set "
+            "(the spend cap needs them)"
+        )
+    url = settings.openai_base_url
+    if not url.startswith("https://") and not url.startswith(
+        ("http://localhost", "http://127.0.0.1")
+    ):
+        problems.append("OPENAI_BASE_URL must be https (the API key is sent with every request)")
+    if settings.llm_max_retries < 0 or settings.llm_timeout_seconds <= 0:
+        problems.append("LLM_MAX_RETRIES must be >= 0 and LLM_TIMEOUT_SECONDS > 0")
+    if settings.llm_daily_cap_usd <= 0 or settings.llm_monthly_cap_usd <= 0:
+        problems.append("LLM spend caps must be positive")
+    if problems:
+        raise UnsafeConfigurationError("LLM_PROVIDER=openai refused: " + "; ".join(problems))
+
+
+def validate_embedding_config(settings: Settings) -> None:
+    """A paid embedding provider needs the key, a model, and a price so its spend can be capped."""
+    if settings.embedding_provider != "openai":
+        return
+    problems: list[str] = []
+    if settings.openai_api_key is None:
+        problems.append("OPENAI_API_KEY is not set")
+    if not settings.embedding_model:
+        problems.append("EMBEDDING_MODEL is not set")
+    if settings.embedding_usd_per_million is None:
+        problems.append("EMBEDDING_USD_PER_MILLION is not set (the spend cap needs it)")
+    url = settings.openai_base_url
+    if not url.startswith("https://") and not url.startswith(
+        ("http://localhost", "http://127.0.0.1")
+    ):
+        problems.append("OPENAI_BASE_URL must be https (the API key is sent with every request)")
+    if problems:
+        raise UnsafeConfigurationError("EMBEDDING_PROVIDER=openai refused: " + "; ".join(problems))
+
+
 def validate_execution_safety(settings: Settings, prereqs: ExecutionPrerequisites) -> None:
     if not settings.ad_execution_enabled:
         return
