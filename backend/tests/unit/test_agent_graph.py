@@ -130,7 +130,11 @@ async def test_synthesizer_gets_evidence_as_tool_messages(data: GeneratedData) -
 
 
 async def test_unusable_plan_runs_every_specialist(data: GeneratedData) -> None:
-    script = [text_reply("not json"), done(), done(), done(), final(("Nothing found.", []))]
+    script = [
+        text_reply("not json"),
+        *[done() for _ in SPECIALIST_NAMES],
+        final(("Nothing found.", [])),
+    ]
     result, _ = await ask(script, data)
     assert result.plan_fallback
     assert result.plan.specialists == list(SPECIALIST_NAMES)
@@ -227,7 +231,11 @@ async def test_the_routing_decision_is_recorded_in_the_trace(data: GeneratedData
 
 
 async def test_an_unusable_plan_is_marked_in_the_trace(data: GeneratedData) -> None:
-    script = [text_reply("nope"), done(), done(), done(), final(("Nothing found.", []))]
+    script = [
+        text_reply("nope"),
+        *[done() for _ in SPECIALIST_NAMES],
+        final(("Nothing found.", [])),
+    ]
     result, _ = await ask(script, data)
     names = [(s.name, s.ok) for s in result.run.steps if s.kind == "route"]
     assert names == [("supervisor.plan_fallback", False), ("supervisor", False)]
@@ -255,3 +263,27 @@ async def test_a_graph_run_is_stored_with_its_routing(data: GeneratedData) -> No
     assert [(s["kind"], s["detail"]) for s in stored.trace if s["kind"] == "route"] == [
         ("route", "none")
     ]
+
+
+async def test_the_reporting_specialist_gathers_the_whole_picture_in_one_pass(
+    data: GeneratedData,
+) -> None:
+    script = [
+        plan_reply("ppc_reporting"),
+        tool_reply(
+            ("get_dashboard_summary", {"days": 28}),
+            ("get_campaign_overview", {"days": 28}),
+            ("get_anomalies", {}),
+        ),
+        done(),
+        final(("Report gathered.", ["ev_1", "ev_2", "ev_3"])),
+    ]
+    result, llm = await ask(script, data)
+    assert result.run.status is Status.ANSWERED
+    assert [e.tool for e in result.run.evidence] == [
+        "get_dashboard_summary",
+        "get_campaign_overview",
+        "get_anomalies",
+    ]
+    assert {t.name for t in llm.calls[1].tools} == set(SPECIALISTS["ppc_reporting"].tools)
+    assert "get_top_keywords" not in {t.name for t in llm.calls[1].tools}

@@ -56,7 +56,7 @@ from app.application.ports.llm import (
 class Plan(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    specialists: list[SpecialistName] = Field(max_length=3)
+    specialists: list[SpecialistName] = Field(max_length=4)
     rationale: str = Field(max_length=300)
 
 

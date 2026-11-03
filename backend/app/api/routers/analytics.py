@@ -6,9 +6,10 @@ All routes are tenant-scoped through ``get_scope``. Analytics never mutates adve
 from dataclasses import replace
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import PlainTextResponse
 
 from app.api.serialize import envelope, to_jsonable
 from app.api.tenancy import Scope, get_scope
@@ -21,6 +22,11 @@ from app.application.analytics.thresholds import DEFAULT_TARGET_ACOS_PCT, DEFAUL
 from app.application.forecasting.records import save_account_forecast
 from app.application.forecasting.reports import forecast_account
 from app.application.ports.performance_reader import Provenance
+from app.application.reporting.report import (
+    build_performance_report,
+    campaigns_csv,
+    report_markdown,
+)
 from app.domain.kpi.metrics import Kpis, acos_pct
 from app.domain.kpi.periods import DateRange
 
@@ -181,3 +187,27 @@ async def get_account_forecast(scope: Scope = Depends(get_scope)) -> dict[str, A
     body["data"]["acos_pct"] = to_jsonable(acos_pct(spend_total, sales_total))
     body["data"]["acos_note"] = "Derived from the stored spend and sales forecasts."
     return body
+
+
+@router.get("/reports/performance")
+async def get_performance_report(
+    date_from: FromParam = None,
+    date_to: ToParam = None,
+    target_acos_pct: TargetAcos = DEFAULT_TARGET_ACOS_PCT,
+    report_format: Annotated[
+        Literal["json", "markdown", "csv"], Query(alias="format", description="Output format")
+    ] = "json",
+    scope: Scope = Depends(get_scope),
+) -> Any:
+    """A deterministic report built by code (no model). ``csv`` is the campaign table."""
+    period = await period_of(scope, date_from, date_to)
+    report = await build_performance_report(scope.reader, period, target_acos_pct=target_acos_pct)
+    if report_format == "markdown":
+        return PlainTextResponse(report_markdown(report), media_type="text/markdown")
+    if report_format == "csv":
+        return PlainTextResponse(
+            campaigns_csv(report),
+            media_type="text/csv",
+            headers={"Content-Disposition": 'attachment; filename="campaigns.csv"'},
+        )
+    return {"data": to_jsonable(report), "notes": list(report.notes)}

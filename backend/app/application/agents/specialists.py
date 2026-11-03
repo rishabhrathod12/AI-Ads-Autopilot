@@ -8,7 +8,9 @@ recommendations that need the approval workflow (ADR 0018).
 from dataclasses import dataclass
 from typing import Literal, get_args
 
-SpecialistName = Literal["campaign_analysis", "keyword_intelligence", "performance_prediction"]
+SpecialistName = Literal[
+    "campaign_analysis", "keyword_intelligence", "performance_prediction", "ppc_reporting"
+]
 SPECIALIST_NAMES: tuple[SpecialistName, ...] = get_args(SpecialistName)
 
 KNOWLEDGE = "search_knowledge"
@@ -46,6 +48,19 @@ SPECIALISTS: dict[str, Specialist] = {
             "performance_prediction",
             "The stored 14-day forecast of spend, sales and ACOS and how it was chosen.",
             ("get_account_forecast", KNOWLEDGE),
+        ),
+        Specialist(
+            "ppc_reporting",
+            "Overview or report requests ('summarise my account', 'weekly report', 'give me the "
+            "full picture'): collects the account summary, campaigns, keyword findings, "
+            "anomalies and forecast in one pass. Use it alone for these; do not add others.",
+            (
+                "get_dashboard_summary",
+                "get_campaign_overview",
+                "get_keyword_findings",
+                "get_anomalies",
+                "get_account_forecast",
+            ),
         ),
     )
 }
