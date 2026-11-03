@@ -427,3 +427,27 @@ async def test_the_system_prompt_states_the_non_negotiable_rules() -> None:
         "cannot change any campaign",
     ):
         assert rule in SYSTEM_PROMPT, rule
+
+
+async def test_an_honest_no_forecast_answer_may_repeat_the_sellers_two_weeks(
+    data: GeneratedData,
+) -> None:
+    llm = ScriptedLLM(
+        [
+            tool_reply(("get_account_forecast", {})),
+            final(("No forecast has been generated for the next two weeks.", ["ev_1"])),
+        ]
+    )
+    run = await run_assistant(llm, ctx(data), "What will happen over the next two weeks?")
+    assert run.status is Status.ANSWERED
+    assert run.validation_attempts == 0
+
+    bare = ScriptedLLM(
+        [
+            tool_reply(("get_account_forecast", {})),
+            final(("No forecast has been generated for the next two weeks.", ["ev_1"])),
+            final(("No forecast has been generated for the next two weeks.", ["ev_1"])),
+        ]
+    )
+    run = await run_assistant(bare, ctx(data), "What will happen?")
+    assert run.status is Status.UNVERIFIED

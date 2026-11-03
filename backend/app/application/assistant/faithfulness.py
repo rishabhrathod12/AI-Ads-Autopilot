@@ -304,8 +304,25 @@ class ValidationResult:
         return not self.violations
 
 
-def validate_answer(draft: DraftAnswer, evidence: Sequence[Evidence]) -> ValidationResult:
-    """Check every claim against the evidence it cites, and every caveat against all evidence."""
+def _echo_filters(question: str) -> tuple[list[Stated], list[StatedDate]]:
+    """Bare counts and dates the seller wrote in the question itself ("next two weeks", "14 days").
+
+    Only unit-less numbers qualify. A rupee, percent or multiple amount in the question is a
+    figure the seller asserts, so repeating it still needs evidence (ADR 0019).
+    """
+    dates, _ = extract_dates(question)
+    return [n for n in extract_numbers(question) if n.unit == "none"], dates
+
+
+def validate_answer(
+    draft: DraftAnswer, evidence: Sequence[Evidence], *, question: str = ""
+) -> ValidationResult:
+    """Check every claim against the evidence it cites, and every caveat against all evidence.
+
+    Unit-less numbers and dates that appear in ``question`` are the seller's own words repeated
+    back, not claims about the data, so they are not checked.
+    """
+    echo_numbers, echo_dates = _echo_filters(question)
     by_id = {e.id: facts_from_evidence(e) for e in evidence}
     everything = list(by_id.values())
     violations: list[Violation] = []
@@ -315,6 +332,19 @@ def validate_answer(draft: DraftAnswer, evidence: Sequence[Evidence]) -> Validat
     def check(text: str, pool: list[Facts], where: str, *, require_citation: bool) -> None:
         dates, _ = extract_dates(text)
         numbers = extract_numbers(text)
+        dates = [
+            d
+            for d in dates
+            if not any((d.day, d.month, d.year) == (q.day, q.month, q.year) for q in echo_dates)
+        ]
+        numbers = [
+            n
+            for n in numbers
+            if not (
+                n.unit == "none"
+                and any(q.value == n.value and q.scale == n.scale for q in echo_numbers)
+            )
+        ]
         if require_citation and (dates or numbers) and not pool:
             detail = "This statement contains figures or dates but cites no evidence."
             violations.append(Violation("uncited_numbers", where, text, detail))

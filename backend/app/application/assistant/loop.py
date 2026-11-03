@@ -244,10 +244,20 @@ def finish_run(
     )
 
 
-def salvage(draft: DraftAnswer, evidence: Sequence[Evidence]) -> tuple[list[Claim], list[str]]:
+def salvage(
+    draft: DraftAnswer, evidence: Sequence[Evidence], question: str = ""
+) -> tuple[list[Claim], list[str]]:
     """Keep the claims and caveats that verify on their own."""
-    kept = [c for c in draft.claims if validate_answer(DraftAnswer((c,)), evidence).ok]
-    caveats = [c for c in draft.caveats if validate_answer(DraftAnswer((), (c,)), evidence).ok]
+    kept = [
+        c
+        for c in draft.claims
+        if validate_answer(DraftAnswer((c,)), evidence, question=question).ok
+    ]
+    caveats = [
+        c
+        for c in draft.caveats
+        if validate_answer(DraftAnswer((), (c,)), evidence, question=question).ok
+    ]
     return kept, caveats
 
 
@@ -382,7 +392,7 @@ def check_final(
         confidence=args.confidence,
     )
     evidence = state.runner.evidence
-    result: ValidationResult = validate_answer(draft, evidence)
+    result: ValidationResult = validate_answer(draft, evidence, question=question)
     state.step(
         "validation",
         "faithfulness",
@@ -406,7 +416,7 @@ def check_final(
         state.messages.append(reply_message(call, correction_message(result)))
         return None
 
-    kept, caveats = salvage(draft, evidence)
+    kept, caveats = salvage(draft, evidence, question)
     if kept:
         return finish_run(
             state,

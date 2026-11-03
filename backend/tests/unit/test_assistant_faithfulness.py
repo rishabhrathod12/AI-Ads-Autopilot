@@ -349,3 +349,54 @@ def test_only_dates_in_the_period_window_are_not_blindly_allowed() -> None:
     # the period is 5 Oct - 1 Nov; a date inside it that is NOT an endpoint is still unsupported
     assert says("Spend peaked on 15 Oct") != []
     assert (date(2026, 10, 15) - timedelta(days=0)).day == 15
+
+
+# ---- numbers the seller wrote in the question (ADR 0019) ----------------------------------------
+def _verdict(text: str, question: str, *evidence: Evidence, cite: bool = False) -> bool:
+    ids = tuple(e.id for e in evidence) if cite else ()
+    return validate_answer(DraftAnswer((Claim(text, ids),)), evidence, question=question).ok
+
+
+def test_a_count_the_seller_wrote_may_be_repeated_without_evidence() -> None:
+    q = "What do you expect over the next two weeks?"
+    assert _verdict("No forecast exists for the next two weeks.", q)
+    assert _verdict("There is no 14-day forecast.", "Show me the 14 day forecast")
+
+
+def test_the_same_text_without_the_question_is_still_rejected() -> None:
+    assert not _verdict("No forecast exists for the next two weeks.", "What is my forecast?")
+    assert not _verdict("There is no 14-day forecast.", "")
+
+
+def test_only_the_number_the_seller_wrote_is_excused() -> None:
+    q = "What happens over the next two weeks?"
+    assert not _verdict("No forecast for two weeks, but ACOS will be three.", q)
+    assert not _verdict("There are 5 campaigns over two weeks.", q)
+
+
+def test_money_percent_and_multiples_in_the_question_still_need_evidence() -> None:
+    assert not _verdict("Your ACOS is 5%.", "My ACOS is 5%, right?")
+    assert not _verdict("You spent ₹5000.", "I spent ₹5000, correct?")
+    assert not _verdict("ROAS is 3x.", "Is my ROAS 3x?")
+
+
+def test_a_question_number_does_not_excuse_a_different_unit() -> None:
+    assert not _verdict("ACOS is 14%.", "Look at the last 14 days")
+
+
+def test_a_cited_figure_still_has_to_match_when_the_question_has_numbers() -> None:
+    q = "How did the last 28 days go?"
+    assert _verdict("Over 28 days ACOS was 19.4%.", q, SUMMARY, cite=True)
+    assert not _verdict("Over 28 days ACOS was 25.1%.", q, SUMMARY, cite=True)
+
+
+def test_dates_the_seller_wrote_may_be_repeated() -> None:
+    q = "What happened on 2026-10-04?"
+    assert _verdict("I have no data for 2026-10-04.", q)
+    assert not _verdict("I have no data for 2026-10-05.", q)
+
+
+def test_caveats_get_the_same_allowance() -> None:
+    draft = DraftAnswer((), ("No forecast exists for two weeks.",))
+    assert validate_answer(draft, [], question="Forecast the next two weeks").ok
+    assert not validate_answer(draft, [], question="Forecast").ok
