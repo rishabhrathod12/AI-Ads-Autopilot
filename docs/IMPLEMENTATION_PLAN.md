@@ -46,7 +46,7 @@ See [ANALYTICS.md](ANALYTICS.md) and [ML_EVALUATION.md](ML_EVALUATION.md). **Exi
 ## M5 – Multi-Agent System (IN PROGRESS; scope in ADR 0018)
 LangGraph graph, typed state, specialists, Validator, checkpointing. **Exit:** routing and faithfulness evals pass.
 
-Steps: (1) docs + ADR 0018 **done**; (2-3) graph skeleton, supervisor, three read-only specialists, validator reuse, budgets **done** (`backend/app/application/agents/`, 14 scripted-model tests, no live run yet); (4) reporting agent; (5) Postgres checkpointer and persisted trace (run counters/evidence currently live on `GraphRun`, not in checkpointed state); (6) chat API switch with single-agent fallback; (7) pre-registered routing and faithfulness evaluation vs the M4 held-out baseline.
+Steps: (1) docs + ADR 0018 **done**; (2-3) graph skeleton, supervisor, three read-only specialists, validator reuse, budgets **done** (`backend/app/application/agents/`, 14 scripted-model tests, no live run yet); (4) reporting agent; (5) Postgres checkpointer and persisted trace (run counters/evidence currently live on `GraphRun`, not in checkpointed state); (6) chat API switch (`ASSISTANT_ENGINE`, default single) **done**; (7) pre-registered evaluation **run, partly failed** (held-out and cost criteria pass, routing criterion fails on one unverified answer; see ASSISTANT.md). Steps 4 and 5 remain.
 
 ## M6 – Optimization and Approval
 Bid/budget/negative-keyword recommendations, approval workflow, audit logs, gated execution (disabled). **Exit:** guardrail violations = 0; approval flow end-to-end on mock.

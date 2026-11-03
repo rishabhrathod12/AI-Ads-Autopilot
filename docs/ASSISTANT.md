@@ -107,6 +107,32 @@ the "say it first" prompt rule was not strictly followed (some refusals appear a
 allows); and in D4 the assistant still volunteered the seller's own ACOS beside a clear "no data for BrightCart" note.
 This set is now the baseline that the M5 graph is compared against.
 
+## M5: agent graph evaluation (pre-registered in `03edf08`, run once)
+
+Supervisor, three read-only specialists, synthesizer and the unchanged M4 validator (ADR 0018), selected with
+`ASSISTANT_ENGINE=graph` (default stays `single`). 20 questions: the 12 held-out ones plus 8 new routing questions,
+same data, model and checks as the baseline. Prompts for the graph had never been run live before this. Raw results:
+`backend/tests/evals/results/agents_eval.json`.
+
+| Criterion (fixed in advance) | Result |
+|---|---|
+| H. Held-out set no worse than baseline (C 4/4, D >= 3/4 with both third-party clean, A >= 3/4) | **Pass**: 4/4, 4/4, 4/4, identical to the baseline |
+| R. Routing exact-match >= 6/8; R5 and R6 route to no specialist; every routed question answered or partial | **Fail**: 7/8 exact, R5 and R6 correct, but R3 ended `unverified` |
+| O. No `llm_error`, <= 1 plan fallback, unverified <= 15%, cost <= $0.40 and <= 2.5x baseline per question | **Pass**: no errors, 0 fallbacks, 1/20 unverified (5%), $0.060 total, $0.0030 per question (1.15x) |
+
+- **The R failure is real and recorded as such.** R3 ("what do you expect my spend and sales to do over the next two
+  weeks?") routed correctly to `performance_prediction` and fetched the forecast, but both drafts failed the
+  faithfulness check, so no figures were shown. The cause is **not diagnosed**: the evaluation harness does not store the
+  validator's violations. It is not known whether the single assistant would do better on this question.
+- **R8 routed to two specialists where one was expected** (keyword plus campaign). It still answered correctly; the
+  exact-match count allows 2 misses.
+- **No improvement is shown.** The graph matched the baseline on the held-out set and cost about 15% more per
+  question. The evidence supports "no worse on this sample", not "better".
+- **Limits:** 20 questions, one sample each, one model, MOCK data. The check functions are phrase-matching.
+  Per the pre-registration the graph is not tuned and re-run on these questions; a prompt change needs a new set.
+- **Next measurements:** store validator violations in the harness, and run R3-style forecast questions through the
+  single assistant for comparison.
+
 ## Known gaps and next steps
 
 - Wider paraphrased test sets (the held-out set above is small); name-attribution is fixed on that sample only.
