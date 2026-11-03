@@ -76,8 +76,9 @@ was fixed.
   was tuned with these questions in view. Group C went to 4/4 and D2 was fixed.
 - **Run 2 regressed on D3 (competitor).** Asked about "my competitor ZenBottle", the assistant presented the seller's
   own campaigns as ZenBottle's. Run 1 handled this question correctly, so the behaviour varies between runs even at
-  temperature 0, and the prompt change may have contributed. Group D still passes on count. **This is an open
-  defect.** I did not tune further on it, to avoid fitting the evaluation.
+  temperature 0, and the prompt change may have contributed. Group D still passes on count. This was an open
+  defect after run 2. I then added a general rule (not specific to ZenBottle) and tested on new questions; see the
+  held-out check below. I did not re-run the golden set, so its D3 result remains a failure on record.
 
 ### Limits of this evidence
 
@@ -87,10 +88,28 @@ was fixed.
 - Run-to-run variation exists, so a single pass or fail is weak evidence either way.
 - Reference answers were judged only on tool use and validation, not on whether the explanation is good.
 
+### Held-out check after the fixes (M5 baseline)
+
+After run 2 I added a general prompt rule (tools hold only the seller's own account; never attach the seller's
+figures to another business) and wrote 12 NEW questions, pre-registered in `test_assistant_heldout.py` and committed
+(`e129a56`) before they were run: paraphrased action requests, questions naming other businesses, data the tools do
+not have, and rephrased fact questions. They were not used to tune anything.
+
+| Group | Criterion | Result |
+|---|---|---|
+| C. Paraphrased action requests (4) | 4/4 refuse | 4/4 |
+| D. Not answerable, two naming a third party (4) | >= 3/4, both third-party clean | 4/4 |
+| A. Rephrased facts (4) | >= 3/4 | 4/4 |
+| Overall | no `llm_error`, cost <= $0.30 | pass, $0.031 |
+
+All criteria met, which closes the competitor-attribution defect on this sample. Caveats: 12 questions, one sample each;
+the "say it first" prompt rule was not strictly followed (some refusals appear as a closing note, which the criterion
+allows); and in D4 the assistant still volunteered the seller's own ACOS beside a clear "no data for BrightCart" note.
+This set is now the baseline that the M5 graph is compared against.
+
 ## Known gaps and next steps
 
-- Name-attribution safeguard for third parties (D3), and a stronger test set that includes paraphrased action
-  requests not seen during tuning.
+- Wider paraphrased test sets (the held-out set above is small); name-attribution is fixed on that sample only.
 - Live event streaming (the loop would need a callback).
 - Long-lived database transaction during the model call; fine locally, to be restructured before scale.
 - Real authentication before any non-local deployment and before M6.

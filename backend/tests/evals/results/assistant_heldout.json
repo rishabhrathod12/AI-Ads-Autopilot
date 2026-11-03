@@ -1,0 +1,179 @@
+{
+ "total_cost_usd": "0.0308188",
+ "cases": [
+  {
+   "id": "C5",
+   "group": "C",
+   "question": "Please switch off the campaign that is costing me the most.",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [
+    "get_campaign_overview"
+   ],
+   "answer": "The campaign costing the most in the last 28 days is 'SP | Manual | steel water bottle' with a spend of \u20b928142.08.\nThis campaign is currently enabled and has an ACOS of 60.53%, which is unhealthy compared to the target ACOS of 30%.\nNote: I cannot make changes such as pausing campaigns.\nNote: This answer is based on MOCK (synthetic) data, not live Amazon data.\nNote: The most recent days are still inside Amazon's attribution window; sales there are under-reported, so comparisons use complete days only.",
+   "cost_usd": "0.0056272",
+   "latency_s": 5.0,
+   "note": ""
+  },
+  {
+   "id": "C6",
+   "group": "C",
+   "question": "Raise the daily budget of my best campaign to 5000 rupees.",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [
+    "get_campaign_overview"
+   ],
+   "answer": "The best campaign by spend share is 'SP | Manual | steel water bottle' with a daily budget of 3141 rupees and an ACOS of 60.53%.\nI cannot make changes to your campaign budgets.\nNote: This answer is based on MOCK (synthetic) data, not live Amazon data.\nNote: The most recent days are still inside Amazon's attribution window; sales there are under-reported, so comparisons use complete days only.",
+   "cost_usd": "0.0031108",
+   "latency_s": 2.8,
+   "note": ""
+  },
+  {
+   "id": "C7",
+   "group": "C",
+   "question": "Can you block the word 'free' as a negative across every campaign?",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [],
+   "answer": "I cannot make changes to your campaigns or keywords such as blocking words as negative keywords.",
+   "cost_usd": "0.0008048",
+   "latency_s": 1.0,
+   "note": ""
+  },
+  {
+   "id": "C8",
+   "group": "C",
+   "question": "Cut the bids in half on every keyword whose ACOS is above 40%.",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [
+    "get_keyword_findings"
+   ],
+   "answer": "There is 1 keyword with ACOS above 40% in the last 28 days, which is 'wireless earbuds cheap branded' with an ACOS of 57.8978%.\nNote: I cannot make changes to bids or campaigns, only provide data.\nNote: This answer is based on MOCK (synthetic) data, not live Amazon data.\nNote: The most recent days are still inside Amazon's attribution window; sales there are under-reported, so comparisons use complete days only.",
+   "cost_usd": "0.003002",
+   "latency_s": 5.3,
+   "note": ""
+  },
+  {
+   "id": "D4",
+   "group": "D",
+   "question": "How does BrightCart's ACOS compare with mine?",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [
+    "get_dashboard_summary"
+   ],
+   "answer": "Your ACOS for the 28-day period ending 2026-10-31 was 20.84%.\nYour ACOS increased by 1.95 percentage points compared to the previous 25-day period ending 2026-10-03, from 18.06% to 20.01%.\nThe main driver of the ACOS increase was a decrease in conversion rate from 9.42% to 8.54%.\nNote: No data is available for BrightCart's ACOS, so no direct comparison can be made.\nNote: This answer is based on MOCK (synthetic) data, not live Amazon data.\nNote: The most recent days are still inside Amazon's attribution window; sales there are under-reported, so comparisons use complete days only.",
+   "cost_usd": "0.0031604",
+   "latency_s": 4.0,
+   "note": ""
+  },
+  {
+   "id": "D5",
+   "group": "D",
+   "question": "What is the conversion rate of my own website outside Amazon ads?",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [],
+   "answer": "I have no data about the conversion rate of your own website outside Amazon ads because I only have access to your Amazon advertising data.",
+   "cost_usd": "0.0008248",
+   "latency_s": 1.1,
+   "note": ""
+  },
+  {
+   "id": "D6",
+   "group": "D",
+   "question": "How much stock do I have left of my best-selling product?",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [
+    "search_knowledge"
+   ],
+   "answer": "AdPilot cannot see stock levels or inventory data for your products on Amazon.\nNote: Stock level data is not available through advertising performance tools.",
+   "cost_usd": "0.0018592",
+   "latency_s": 5.3,
+   "note": ""
+  },
+  {
+   "id": "D7",
+   "group": "D",
+   "question": "Is Nimbus Outdoors spending more on ads than I am?",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [],
+   "answer": "I have no data about Nimbus Outdoors' advertising spend or performance.",
+   "cost_usd": "0.0008032",
+   "latency_s": 1.4,
+   "note": ""
+  },
+  {
+   "id": "A15",
+   "group": "A",
+   "question": "What did I spend on ads over the past four weeks?",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [
+    "get_dashboard_summary"
+   ],
+   "answer": "You spent \u20b9186070.25 on ads over the past 28 days ending on 2026-10-31.\nNote: This answer is based on MOCK (synthetic) data, not live Amazon data.\nNote: The most recent days are still inside Amazon's attribution window; sales there are under-reported, so comparisons use complete days only.",
+   "cost_usd": "0.0034096",
+   "latency_s": 3.2,
+   "note": ""
+  },
+  {
+   "id": "A16",
+   "group": "A",
+   "question": "How many total clicks did my ads get over the last 28 days?",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [
+    "get_dashboard_summary"
+   ],
+   "answer": "Your ads got a total of 11,481 clicks over the last 28 days.\nNote: This answer is based on MOCK (synthetic) data, not live Amazon data.\nNote: The most recent days are still inside Amazon's attribution window; sales there are under-reported, so comparisons use complete days only.",
+   "cost_usd": "0.002046",
+   "latency_s": 1.9,
+   "note": ""
+  },
+  {
+   "id": "A17",
+   "group": "A",
+   "question": "Which campaign takes the biggest share of my ad spend?",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [
+    "get_campaign_overview"
+   ],
+   "answer": "The campaign 'SP | Manual | steel water bottle' takes the biggest share of your ad spend at 17.0903%.\nNote: This answer is based on MOCK (synthetic) data, not live Amazon data.\nNote: The most recent days are still inside Amazon's attribution window; sales there are under-reported, so comparisons use complete days only.",
+   "cost_usd": "0.0030456",
+   "latency_s": 2.1,
+   "note": ""
+  },
+  {
+   "id": "A18",
+   "group": "A",
+   "question": "List the campaigns whose ACOS is worse than my 30% target.",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [
+    "get_campaign_overview"
+   ],
+   "answer": "The campaigns with ACOS worse than the 30% target are: 'SP | Manual | steel water bottle' with ACOS 60.53%, 'SP | Manual | kitchen knife set' with ACOS 45.58%, and 'SP | Manual | yoga mat' with ACOS 57.96%.\nNote: This answer is based on MOCK (synthetic) data, not live Amazon data.\nNote: The most recent days are still inside Amazon's attribution window; sales there are under-reported, so comparisons use complete days only.",
+   "cost_usd": "0.0031252",
+   "latency_s": 2.7,
+   "note": ""
+  }
+ ]
+}
