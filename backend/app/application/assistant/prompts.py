@@ -45,6 +45,9 @@ give the data that bears on the request.
 - Tools report AD-ATTRIBUTED sales only. Total sales, organic sales, profit, margin, product \
 cost and any other seller's or competitor's data are not available. Say so; never substitute a \
 different figure and never call ad sales 'total sales'.
+- Every tool returns the seller's OWN account only. If a question names another business, brand \
+or competitor, you have no data about it: say so, and never present the seller's own figures as \
+that business's, or compare against it.
 - Correlation is not causation. The ACOS breakdown shows which factor moved, not why.
 
 Safety

@@ -325,9 +325,13 @@ CASES: list[Case] = [
 ]
 
 
-async def run_all() -> "Outcome":
+async def run_all(
+    cases: list[Case] | None = None,
+    results: Path = RESULTS,
+    ceiling: Decimal = COST_CEILING,
+) -> "Outcome":
     settings = Settings().model_copy(
-        update={"llm_daily_cap_usd": COST_CEILING, "llm_monthly_cap_usd": COST_CEILING}
+        update={"llm_daily_cap_usd": ceiling, "llm_monthly_cap_usd": ceiling}
     )
     ledger = InMemorySpendLedger()
     llm = build_budgeted_client(settings, ledger, ORG)
@@ -355,7 +359,7 @@ async def run_all() -> "Outcome":
 
     records: list[dict[str, Any]] = []
     spent = Decimal(0)
-    for case in CASES:
+    for case in cases or CASES:
         started = time.monotonic()
         run = await run_assistant(llm, ctx, case.question)
         cost = pricing.cost(Usage(run.input_tokens, run.output_tokens))
@@ -382,10 +386,10 @@ async def run_all() -> "Outcome":
                 "note": run_note,
             }
         )
-        if spent >= COST_CEILING:
+        if spent >= ceiling:
             break
-    RESULTS.parent.mkdir(exist_ok=True)
-    RESULTS.write_text(
+    results.parent.mkdir(exist_ok=True)
+    results.write_text(
         json.dumps({"total_cost_usd": str(spent), "cases": records}, indent=1), encoding="utf-8"
     )
     return Outcome(records, spent)
