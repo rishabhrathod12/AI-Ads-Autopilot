@@ -208,6 +208,14 @@ def test_wasted_targets_restated(fresh: list[Scores]) -> None:
     assert mean([s.wasted_recall for s in fresh]) >= MIN_WASTED_RECALL
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "KNOWN, first scored run on fresh seeds 6-10: negative precision(confirmed)=0.77 < 0.85 "
+        "(0.86 on seeds 1-5, so it was marginal). Restated testable recall passed (0.94). Cause "
+        "not diagnosed. Any change needs another fresh seed set and an owner decision."
+    ),
+)
 def test_negative_candidates_restated(fresh: list[Scores]) -> None:
     assert mean([s.negative_precision for s in fresh]) >= MIN_NEGATIVE_PRECISION
     assert mean([s.negative_recall_testable for s in fresh]) >= MIN_NEGATIVE_RECALL

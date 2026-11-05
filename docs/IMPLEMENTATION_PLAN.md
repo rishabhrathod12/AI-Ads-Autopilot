@@ -37,7 +37,8 @@ See [ANALYTICS.md](ANALYTICS.md) and [ML_EVALUATION.md](ML_EVALUATION.md). **Exi
   Anomaly detection passed, exactly at its detection limit (8/10).
 - **Not verified:** analytics query timing (< 1 s on the 646k-row seed) and the `EXPLAIN` index review; the Docker Compose stack.
 - **Verified in CI:** backend (full suite incl. Postgres RLS tests; 306 tests pass locally), frontend and gitleaks jobs on `2d1a1bd`. The first run on `2048180` failed only in the gitleaks job (cause unconfirmed; a local gitleaks scan of all history found no leaks).
-- Owner decisions pending: how to treat the three failed checks (re-state criteria and validate on fresh seeds, change
+- **Re-scored on fresh seeds 6-10 with restated truth** (ML_EVALUATION.md 2b): wasted precision and negative recall now pass; negative precision fails (0.77 vs 0.85, recorded as known); the forecast baseline check (6/10) is still open.
+- Owner decisions pending: how to treat the remaining failed checks (negative precision, forecast vs seasonal-naive); originally the three (re-state criteria and validate on fresh seeds, change
   rules, or accept).
 
 ## M4 – GenAI and RAG (IMPLEMENTED, pending owner review; see docs/ASSISTANT.md)

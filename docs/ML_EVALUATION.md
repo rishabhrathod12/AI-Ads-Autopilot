@@ -46,6 +46,24 @@ Reproduce: `cd backend && pytest -m eval tests/evals -s` (slow: ~7 minutes for t
 undetectable and excluded terms from the recall denominator), then validate on fresh seeds 6-10, reporting the
 original run as the first result.
 
+### 2b. Re-scoring on fresh seeds 6-10 with restated truth (criteria pre-registered in `c2a0f06`)
+
+Rules unchanged; only the ground truth was restated (see `test_keyword_findings_eval_v2.py`). Seeds 1-5 above remain the first result.
+
+| Check (mean over 5 seeds) | Threshold | Result |
+|---|---|---|
+| Wasted targets: precision of "confirmed" vs targets converting below half their campaign's rate | >= 0.85 | 0.90 - pass |
+| Wasted targets: recall vs planted zero-rate targets (unchanged) | >= 0.75 | 0.93 - pass |
+| Negative terms: precision of "confirmed" (unchanged) | >= 0.85 | **0.77 - fail** |
+| Negative terms: recall over testable planted terms | >= 0.70 | 0.94 - pass |
+| Opportunities: recall / precision of "strong" | >= 0.80 / 0.80 | 0.89 / 0.94 - pass |
+
+- Against the original narrow truth, wasted precision is 0.72 on these seeds, so the restatement is what makes it pass; the
+  rules did not improve. Original-truth negative recall is 0.58 (testable subset: 0.94 over about 19 terms per seed).
+- Negative precision was 0.86 on seeds 1-5 and 0.77 here, so it was marginal before. Cause not diagnosed.
+  Recorded as a strict known failure; changing it needs another fresh seed set and an owner decision.
+- The restated criteria were written after seeing seeds 1-5, so this is a validation of a post-hoc definition, not a clean pre-registration.
+
 ## 3. Step 5: anomaly detection (seeds 11-15)
 
 Planted: conversion rate halves for the last 14 days in two campaigns (10 cases over 5 seeds).
