@@ -64,6 +64,16 @@ Rules unchanged; only the ground truth was restated (see `test_keyword_findings_
   Recorded as a strict known failure; changing it needs another fresh seed set and an owner decision.
 - The restated criteria were written after seeing seeds 1-5, so this is a validation of a post-hoc definition, not a clean pre-registration.
 
+**Diagnosis of the negative-precision failure (post hoc; scratch script, not a scored run).** Pooled over seeds 1-10, 140
+terms were "confirmed" and 26 are not in the planted set (pooled precision 0.81). Every one of the 26 has a true
+conversion rate **below its campaign's mean** (16 below half of it, 10 between half and the mean; none at or above the
+mean, none exactly zero). They are ordinary terms with a genuinely weak rate that booked zero orders in 30-110 clicks, the
+same pattern as the wasted-target "false positives" in section 2. The detector is doing what its rule says (zero orders
+would be <= 5% likely at the campaign's *average* rate); the planted truth counts only terms generated as irrelevant. So the
+miss is mostly a truth-definition gap, not evidence the rule is wrong, but it also means a "confirmed" negative is a
+*weak-converter* flag, not proof the term is irrelevant. Nothing was changed. Scoring "below half the campaign's rate" as
+true would put pooled precision at about 0.93 only if applied to a fresh seed set; that has not been run.
+
 ## 3. Step 5: anomaly detection (seeds 11-15)
 
 Planted: conversion rate halves for the last 14 days in two campaigns (10 cases over 5 seeds).
