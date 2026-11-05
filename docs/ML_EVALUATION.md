@@ -116,6 +116,31 @@ backtest folds is noisy; and a learned model won in 129 of 130 cases because sea
 a weak bar - the smoothed 4-week seasonal mean may be a fairer benchmark. Because seeds 21-25 are now used, any
 change (stricter margin, different benchmark, ensembling) needs fresh seeds.
 
+### 4b. Account forecast re-score on fresh seeds 26-40 (pre-registered in `47ef3ae`; rule unchanged)
+
+Diagnostic first, on the seen seeds 21-25 (account cases, not scored): benchmarking selection against the better of
+seasonal-naive and the 4-week seasonal mean gave 5/10 not worse (mean improvement 0%); a 10% margin gave 6/10 (+7.8%); both
+together gave 4/10 (-9.8%). The weak-benchmark hypothesis was **not supported** and the rule was not changed.
+
+Then the unchanged rule on 15 fresh seeds (30 account cases):
+
+| Check | Threshold | Result |
+|---|---|---|
+| Selected model no worse than seasonal-naive | >= 70% (21 of 30) | **19 of 30 (63%) - fail** |
+| Mean MAE improvement over seasonal-naive | >= 5% | **-6.7% - fail** |
+| Mean WAPE | <= 15% | 12.5% - pass |
+| No negative bounds, intervals contain the point | all | pass |
+
+Models chosen: ETS 20, ridge 9, gradient boosting 1, no baseline fallbacks. A few large losses dominate the mean (for example
+seed 27 spend: MAE 58k against 15k for seasonal-naive), and several cases where ridge was chosen lost heavily.
+
+**Conclusion.** The first run's +7.8% was luck on a small sample. The fair reading is: the selected model is **not**
+reliably better than "same weekday last week", and on average slightly worse, although its WAPE is acceptable. The
+"beat the baseline or say so" selection rule does not deliver that promise at ~117 days of history. Not diagnosed further:
+the models' errors are large in a few series, and a learned model won in every case, so the backtest-based gate is not
+filtering anything. Options for an owner decision (each needs fresh seeds): ship seasonal-naive/4-week mean as the default
+forecast and show the learned models as experimental; require a much larger margin or a stability check; or average models.
+
 ## 5. Plan deviations, with reasons
 
 | Plan said | What happened | Why |

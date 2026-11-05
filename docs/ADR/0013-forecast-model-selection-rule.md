@@ -24,3 +24,8 @@ selected model was no worse in only 6 of 10 account cases (needed 7), and a lear
 This suggests noisy selection from few backtest folds and a weak benchmark. Candidate changes (larger margin,
 benchmark against the 4-week mean, averaging top models) must be validated on fresh seeds. Forecasting costs about
 3 s per series and runs off the event loop; it is a background-job concern at campaign scale.
+
+## Update (fresh-seed re-score)
+On 30 fresh account cases (seeds 26-40) the selected model was no worse than seasonal-naive in 63% of cases and averaged
+6.7% *worse* in MAE; the first run's +7.8% did not replicate. Alternative benchmarks and margins did not help on the seen
+seeds. The rule as built does not reliably beat the baseline. See ML_EVALUATION.md section 4b. Open: owner decision.
