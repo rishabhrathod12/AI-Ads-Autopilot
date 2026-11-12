@@ -43,6 +43,20 @@ class Settings(BaseSettings):
     auth_jwt_audience: str = ""
     auth_jwks_url: str = ""
     auth_jwt_algorithms: list[str] = ["RS256", "ES256"]
+    # --- Amazon Ads API (M9). OFF and unconfigured by default. Nothing connects to Amazon until
+    # ``amazon_ads_enabled`` is true AND every value below is set; the endpoint mapping is not
+    # implemented (docs/AMAZON_ADS_INTEGRATION.md). URLs are configuration: they were not verified.
+    amazon_ads_enabled: bool = False
+    amazon_ads_client_id: str = ""
+    amazon_ads_client_secret: SecretStr | None = None
+    amazon_ads_token_url: str = ""  # the LWA token endpoint for the account's region
+    amazon_ads_api_base_url: str = ""  # the regional Ads API base URL
+    amazon_ads_requests_per_second: float = 1.0
+    amazon_ads_max_retries: int = 4
+    amazon_ads_timeout_seconds: float = 30.0
+    # JSON {"<key id>": "<base64 of 32 random bytes>"}; refresh tokens use the active key.
+    token_encryption_keys: SecretStr | None = None
+    token_encryption_active_kid: str = ""
     mock_seed: int = 42
     mock_history_days: int = 120
     log_level: str = "INFO"

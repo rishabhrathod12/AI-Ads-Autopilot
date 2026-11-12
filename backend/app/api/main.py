@@ -23,6 +23,7 @@ from app.logging import configure_logging
 from app.startup_checks import (
     ExecutionPrerequisites,
     assert_rls_enforced,
+    validate_amazon_ads_config,
     validate_auth_readiness,
     validate_embedding_config,
     validate_execution_safety,
@@ -61,6 +62,7 @@ def create_app(
     # Fail fast, before anything else starts (ADR 0007).
     validate_execution_safety(settings, prereqs or ExecutionPrerequisites())
     validate_auth_readiness(settings)
+    validate_amazon_ads_config(settings)
     validate_llm_config(settings)
     validate_embedding_config(settings)
     configure_logging(settings.log_level)

@@ -70,7 +70,10 @@ Hash-pinned lock, hardened images, production Compose with migrate/roles jobs, r
 Original scope:
 Cloud deploy, hosted DB, env config, monitoring, docs.
 
-## M9 – Amazon Ads API
+## M9 – Amazon Ads API (PARTLY IMPLEMENTED: endpoint-agnostic layer only; ADR 0025)
+Token manager, retry/rate limiting, LWA refresh, safe HTTP client, encrypted token vault, provider skeleton, config checks; all disabled. **Not done and blocked on the owner:** eligibility/access, verified API documentation, header scheme, endpoint mapping, SQL credential store, OAuth consent flow, read-only validation. See docs/AMAZON_ADS_INTEGRATION.md.
+
+Original scope:
 Eligibility confirmed, OAuth, `AmazonAdsApiProvider`, reports, sync, approved execution. Only after access is granted.
 
 ## M0 task list

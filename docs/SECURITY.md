@@ -7,6 +7,8 @@ No real campaign changes without explicit human approval. Default `AD_EXECUTION_
 Environment / secret manager via Pydantic `SecretStr`. `.env` gitignored; `.env.example` placeholders only. Secret scanning (gitleaks) in CI. Log redaction filter. Only `VITE_`-prefixed public config reaches the frontend.
 
 ## 3. OAuth tokens (M9)
+**Implemented as a disabled, endpoint-agnostic layer (ADR 0025):** AES-256-GCM encryption of refresh tokens with versioned keys and owner binding, in-memory access tokens, no tokens in logs, https-only no-redirect client with a path allowlist. The OAuth consent flow (state, PKCE) and the SQL credential store are not built. Target design:
+
 Authorization code flow with `state` and PKCE. Refresh tokens encrypted at application level (AES-GCM, key versioning, key outside the DB). Access tokens short-lived, memory only. Never logged. User-revocable.
 
 ## 4. Authentication and authorization

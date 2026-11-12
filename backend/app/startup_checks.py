@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.config import Settings
 from app.domain.tenant import TenantContext
+from app.infrastructure.ads_api.token_cipher import CipherConfigError, parse_keys
 from app.infrastructure.auth.jwt_verifier import ASYMMETRIC_ALGORITHMS
 from app.infrastructure.db.session import tenant_session
 
@@ -58,6 +59,48 @@ def validate_auth_readiness(settings: Settings) -> None:
             "APP_ENV=production refused: real authentication is not configured "
             "(set AUTH_JWT_ISSUER, AUTH_JWT_AUDIENCE and AUTH_JWKS_URL)."
         )
+
+
+def validate_amazon_ads_config(settings: Settings) -> None:
+    """Real Amazon connectivity needs the whole configuration, or none of it.
+
+    ``ADS_PROVIDER=amazon`` and ``AMAZON_ADS_ENABLED`` must agree, every credential and URL must be
+    present, URLs must be https, and the refresh-token encryption keys must be usable. Execution of
+    changes is checked separately by ``validate_execution_safety`` and stays disabled.
+    """
+    wants_amazon = settings.ads_provider == "amazon"
+    if wants_amazon != settings.amazon_ads_enabled:
+        raise UnsafeConfigurationError(
+            "ADS_PROVIDER=amazon and AMAZON_ADS_ENABLED=true must be set together (or neither)"
+        )
+    if not wants_amazon:
+        return
+    problems: list[str] = []
+    if not settings.amazon_ads_client_id:
+        problems.append("AMAZON_ADS_CLIENT_ID is not set")
+    secret = settings.amazon_ads_client_secret
+    if secret is None or not secret.get_secret_value():
+        problems.append("AMAZON_ADS_CLIENT_SECRET is not set")
+    for name, url in (
+        ("AMAZON_ADS_TOKEN_URL", settings.amazon_ads_token_url),
+        ("AMAZON_ADS_API_BASE_URL", settings.amazon_ads_api_base_url),
+    ):
+        if not url.startswith("https://"):
+            problems.append(f"{name} must be set and https")
+    if settings.amazon_ads_requests_per_second <= 0 or settings.amazon_ads_max_retries < 0:
+        problems.append("AMAZON_ADS_REQUESTS_PER_SECOND must be > 0 and MAX_RETRIES >= 0")
+    keys_raw = settings.token_encryption_keys
+    if keys_raw is None or not keys_raw.get_secret_value():
+        problems.append("TOKEN_ENCRYPTION_KEYS is not set (refresh tokens are encrypted at rest)")
+    else:
+        try:
+            keys = parse_keys(keys_raw.get_secret_value())
+            if settings.token_encryption_active_kid not in keys:
+                problems.append("TOKEN_ENCRYPTION_ACTIVE_KID is not one of the configured key ids")
+        except CipherConfigError as exc:
+            problems.append(str(exc))
+    if problems:
+        raise UnsafeConfigurationError("ADS_PROVIDER=amazon refused: " + "; ".join(problems))
 
 
 def validate_llm_config(settings: Settings) -> None:
