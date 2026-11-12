@@ -191,6 +191,26 @@ Reading: judged by money rather than by the generator's labels, confirmed negati
 supports the earlier diagnosis that the 0.77 "negative precision" failure was a label-definition gap. Confirmed wasted targets are
 less reliable (about 1 in 5 is not unprofitable at 30%). Terms or targets below 15 clicks are not scored.
 
+## 4e. seasonal_mean_4 vs seasonal-naive as the default (pre-registered in `ecb8e13`; run once)
+
+Both are point forecasts with nothing fitted, scored on fresh seeds: independent generator 121-140, mock generator 46-60. Rule: change
+the default only if A, B and C all pass.
+
+| Source | Cases | seasonal_mean_4 no worse | Mean MAE gain | WAPE naive -> mean4 | Rule |
+|---|---|---|---|---|---|
+| A independent (bars 70%, +5%) | 40 | 75% | +11.0% | 0.334 -> 0.285 | pass |
+| B mock, account level (bars 70%, +5%) | 30 | **43%** | **-3.4%** | 0.144 -> 0.138 | **fail** |
+| C mock, campaign level (bars 60%, >= 0) | 360 | 75% | +12.3% | 0.504 -> 0.435 | pass |
+
+(Independent: MAE 2.30M -> 1.91M, RMSE 3.05M -> 2.63M, MAPE 0.373 -> 0.308. Mock account: MAE 415k -> 381k, RMSE 492k -> 464k.
+Mock campaign: MAE 106k -> 90k, RMSE 132k -> 110k, MAPE 0.603 -> 0.533.)
+
+**Outcome: the default stays seasonal-naive.** Reading: seasonal_mean_4 is better in 2 of 3 settings, and at the pooled level it is
+slightly better even at account level, but on mock account series it wins only 43% of individual cases. With 30 cases that share has
+a standard error near 9 points, so "not reliably better there" is the honest statement, not "worse". The rule was written
+to require all three, so mixed evidence means no change. Interval calibration for seasonal_mean_4 was not tested. Rule B is
+recorded as a strict known failure. Re-testing needs another fresh-seed set and an owner decision. Seeds 46-60 and 121-140 are spent.
+
 ## 5. Plan deviations, with reasons
 
 | Plan said | What happened | Why |
