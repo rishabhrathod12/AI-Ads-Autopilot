@@ -25,6 +25,7 @@ from app.infrastructure.llm.fake import ScriptedLLM, tool_reply
 from app.infrastructure.providers.mock.generator import MockConfig, generate
 from tests.unit.fake_reader import FakeReader
 from tests.unit.memory_assistant_store import MemoryAssistantStore
+from tests.unit.memory_audit_store import MemoryAuditStore
 from tests.unit.test_assistant_tools import MemoryStore
 
 END = date(2026, 10, 31)
@@ -69,6 +70,7 @@ def make_client(
     *,
     configured: bool = True,
     settings: Settings | None = None,
+    audit: MemoryAuditStore | None = None,
 ) -> TestClient:
     app = create_app(settings or Settings(_env_file=None))
 
@@ -81,7 +83,7 @@ def make_client(
                 ScriptedLLM(script()), ctx, store, Pricing(Decimal(2), Decimal(8))
             )
 
-        yield AssistantDeps(ORG, store, make)
+        yield AssistantDeps(ORG, store, make, audit or MemoryAuditStore(), "tester")
 
     app.dependency_overrides[get_assistant] = deps
     return TestClient(app)
@@ -220,3 +222,19 @@ def test_the_limiter_forgets_old_hits_and_isolates_keys() -> None:
     assert limiter.allow(b)  # another tenant is unaffected
     now[0] = 61.0
     assert limiter.allow(a)
+
+
+def test_thread_creation_and_questions_are_audited_without_the_question_text(
+    store: MemoryAssistantStore,
+) -> None:
+    audit = MemoryAuditStore()
+    question = "How is my ACOS? (private detail: sk-live-abcdef1234567890)"
+    with make_client(store, audit=audit) as c:
+        thread = new_thread(c)
+        assert ask(c, thread, question).status_code == 200
+    actions = [e.action for e in audit.entries]
+    assert actions == ["assistant.thread_created", "assistant.question_asked"]
+    asked = audit.entries[1]
+    assert asked.actor == "tester" and asked.entity_type == "assistant_run"
+    assert asked.after == {"thread_id": thread, "question_chars": len(question)}
+    assert "sk-live" not in repr(audit.entries) and "private detail" not in repr(audit.entries)

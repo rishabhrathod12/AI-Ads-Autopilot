@@ -4,11 +4,11 @@ All routes are tenant-scoped through ``get_scope``. Analytics never mutates adve
 """
 
 from dataclasses import replace
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import PlainTextResponse
 
 from app.api.serialize import envelope, to_jsonable
@@ -19,6 +19,7 @@ from app.application.analytics.dashboard import NoDataError, dashboard_summary
 from app.application.analytics.keyword_tables import SortKey, search_term_table, target_table
 from app.application.analytics.keywords import keyword_analysis
 from app.application.analytics.thresholds import DEFAULT_TARGET_ACOS_PCT, DEFAULT_WINDOW_DAYS
+from app.application.audit import audit_entry
 from app.application.forecasting.records import save_account_forecast
 from app.application.forecasting.reports import forecast_account
 from app.application.ports.performance_reader import Provenance
@@ -166,12 +167,25 @@ async def get_anomalies(scope: Scope = Depends(get_scope)) -> dict[str, Any]:
 
 @router.post("/forecasts/account", status_code=201)
 async def create_account_forecast(
-    _principal: Principal = ANALYST_REQUIRED,  # first: authorize before a tenant session opens
+    request: Request,
+    principal: Principal = ANALYST_REQUIRED,  # first: authorize before a tenant session opens
     scope: Scope = Depends(get_scope),
 ) -> dict[str, Any]:
     """Backtest, select and store a 14-day spend and sales forecast (takes several seconds)."""
     result = await forecast_account(scope.reader)
     ids = await save_account_forecast(scope.forecasts, result)
+    await scope.audit.add_audit(
+        audit_entry(
+            org=scope.organization_id,
+            actor=principal.subject,
+            action="forecast.created",
+            entity_type="forecast",
+            entity_id="account",
+            now=datetime.now(UTC),
+            request_id=getattr(request.state, "request_id", None),
+            after={"run_ids": {metric: str(run_id) for metric, run_id in ids.items()}},
+        )
+    )
     body = envelope(result, result.provenance, result.freshness)
     body["data"]["run_ids"] = to_jsonable(ids)
     return body

@@ -31,6 +31,7 @@ from app.domain.kpi.metrics import Kpis
 from app.domain.kpi.periods import DateRange
 from app.infrastructure.providers.mock.generator import GeneratedData, MockConfig, generate
 from tests.unit.fake_reader import FakeReader
+from tests.unit.memory_audit_store import MemoryAuditStore
 from tests.unit.test_api_analytics import MemoryForecastStore
 
 END = date(2026, 10, 31)
@@ -138,7 +139,7 @@ def client(data: GeneratedData) -> Iterator[TestClient]:
     reader, store = FakeReader(data, ORG, NOW), MemoryForecastStore()
 
     async def scope() -> AsyncIterator[Scope]:
-        yield Scope(ORG, reader, store)
+        yield Scope(ORG, reader, store, MemoryAuditStore())
 
     app.dependency_overrides[get_scope] = scope
     with TestClient(app) as c:

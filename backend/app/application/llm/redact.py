@@ -1,6 +1,7 @@
 """Scrub secrets and personal identifiers from text before it is logged or stored in an error."""
 
 import re
+from typing import Any
 
 REDACTED = "[REDACTED]"
 _PATTERNS = [
@@ -17,3 +18,16 @@ def redact(text: str) -> str:
     for pattern in _PATTERNS:
         text = pattern.sub(REDACTED, text)
     return text
+
+
+def redact_obj(value: Any, *, max_depth: int = 6) -> Any:
+    """``redact`` applied to every string inside dicts, lists and tuples (keys are kept)."""
+    if isinstance(value, str):
+        return redact(value)
+    if max_depth <= 0:
+        return value
+    if isinstance(value, dict):
+        return {k: redact_obj(v, max_depth=max_depth - 1) for k, v in value.items()}
+    if isinstance(value, list | tuple):
+        return [redact_obj(v, max_depth=max_depth - 1) for v in value]
+    return value

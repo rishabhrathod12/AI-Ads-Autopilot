@@ -20,6 +20,7 @@ from uuid import UUID
 import structlog
 from fastapi import Depends, HTTPException, Request
 
+from app.application.ports.audit_store import AuditStore
 from app.application.ports.auth import AuthError, MembershipDirectory, TokenVerifier
 from app.application.ports.forecast_store import ForecastStore
 from app.application.ports.performance_reader import PerformanceReader
@@ -27,6 +28,7 @@ from app.config import Settings
 from app.domain.auth import Principal, Role
 from app.domain.tenant import TenantContext
 from app.infrastructure.auth.membership import SqlMembershipDirectory
+from app.infrastructure.db.audit_store import SqlAuditStore
 from app.infrastructure.db.forecast_store import SqlForecastStore
 from app.infrastructure.db.performance_reader import SqlPerformanceReader
 from app.infrastructure.db.session import tenant_session
@@ -51,6 +53,7 @@ class Scope:
     organization_id: UUID
     reader: PerformanceReader
     forecasts: ForecastStore
+    audit: AuditStore
 
 
 def resolve_tenant(request: Request) -> TenantContext:
@@ -118,6 +121,9 @@ async def current_principal(request: Request) -> Principal:
     structlog.contextvars.bind_contextvars(
         org_id=str(principal.organization_id), role=principal.role.name
     )
+    # The access-log middleware runs outside this task's context, so it reads these instead.
+    request.state.org_id = str(principal.organization_id)
+    request.state.role = principal.role.name
     return principal
 
 
@@ -151,4 +157,9 @@ async def get_scope(
     tenant = tenant_of(principal)
     async with tenant_session(engine, tenant, settings.db_app_role) as session:
         org = tenant.organization_id
-        yield Scope(org, SqlPerformanceReader(session, org), SqlForecastStore(session, org))
+        yield Scope(
+            org,
+            SqlPerformanceReader(session, org),
+            SqlForecastStore(session, org),
+            SqlAuditStore(session, org),
+        )

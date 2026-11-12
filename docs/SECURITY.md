@@ -22,6 +22,8 @@ Per-user/tenant API limits; LLM cost caps; outbound Amazon calls via token bucke
 Agents have no write tools. Retrieved text and tool output treated as data. Structured outputs validated. Validator checks numbers against tool results. No secrets or unnecessary PII sent to the model.
 
 ## 8. Audit logging
+**Implemented (ADR 0023):** every state-changing route writes an audit entry with actor, organization, request id and before/after, in the same transaction; content is scrubbed of credentials and emails first; access logs omit query strings, headers and bodies; log values are redacted, not just secret-named fields. SQL audit queries are unverified until the database tests run. Target design below.
+
 Append-only; records recommendations, approvals, rejections, execution attempts with actor, before/after, request ID.
 
 ## 9. Execution safeguards

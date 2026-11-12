@@ -6,6 +6,7 @@ tenant id: the tenant comes from the same (dev-only) resolution as every other r
 
 from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -21,11 +22,14 @@ from app.application.assistant.service import (
     ThreadNotFoundError,
 )
 from app.application.assistant.tools import ToolContext
+from app.application.audit import audit_entry
 from app.application.ports.assistant_store import AssistantStore, StoredMessage, StoredRun
+from app.application.ports.audit_store import AuditStore
 from app.application.ports.llm import LLMError, LLMNotConfiguredError
 from app.config import Settings
 from app.domain.auth import Principal
 from app.infrastructure.db.assistant_store import SqlAssistantStore, SqlSpendLedger
+from app.infrastructure.db.audit_store import SqlAuditStore
 from app.infrastructure.db.forecast_store import SqlForecastStore
 from app.infrastructure.db.knowledge_store import SqlKnowledgeStore
 from app.infrastructure.db.performance_reader import SqlPerformanceReader
@@ -42,6 +46,8 @@ class AssistantDeps:
     organization_id: UUID
     store: AssistantStore
     make_service: Callable[[], AssistantService]
+    audit: AuditStore
+    actor: str
 
 
 class NewThread(BaseModel):
@@ -92,7 +98,9 @@ async def get_assistant(
                 llm, ctx, store, pricing_of(settings), engine=settings.assistant_engine
             )
 
-        yield AssistantDeps(org, store, make_service)
+        yield AssistantDeps(
+            org, store, make_service, SqlAuditStore(session, org), principal.subject
+        )
 
 
 def limiter_of(request: Request) -> RateLimiter:
@@ -163,10 +171,23 @@ def message_view(m: StoredMessage) -> dict[str, Any]:
 # ---- routes -----------------------------------------------------------------------------------
 @router.post("/threads", status_code=201)
 async def create_thread(
-    body: NewThread | None = None, deps: AssistantDeps = Depends(get_assistant)
+    request: Request,
+    body: NewThread | None = None,
+    deps: AssistantDeps = Depends(get_assistant),
 ) -> dict[str, Any]:
-    title = (body or NewThread()).title
-    return {"thread_id": str(await deps.make_service().start_thread(title))}
+    thread_id = await deps.make_service().start_thread((body or NewThread()).title)
+    await deps.audit.add_audit(
+        audit_entry(
+            org=deps.organization_id,
+            actor=deps.actor,
+            action="assistant.thread_created",
+            entity_type="assistant_thread",
+            entity_id=str(thread_id),
+            now=datetime.now(UTC),
+            request_id=getattr(request.state, "request_id", None),
+        )
+    )
+    return {"thread_id": str(thread_id)}
 
 
 @router.get("/threads/{thread_id}")
@@ -204,6 +225,19 @@ async def ask(
     stored = await deps.store.get_run(run_id)
     if stored is None:  # cannot happen: saved in this transaction
         raise HTTPException(500, "The answer was not saved.")
+    # Who asked and which run answered; the question text stays in the assistant tables only.
+    await deps.audit.add_audit(
+        audit_entry(
+            org=deps.organization_id,
+            actor=deps.actor,
+            action="assistant.question_asked",
+            entity_type="assistant_run",
+            entity_id=str(run_id),
+            now=datetime.now(UTC),
+            request_id=getattr(request.state, "request_id", None),
+            after={"thread_id": str(thread_id), "question_chars": len(body.question)},
+        )
+    )
     return run_view(stored)
 
 

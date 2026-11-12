@@ -11,6 +11,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.application.analytics.dashboard import NoDataError
 from app.application.forecasting.service import InsufficientHistoryError, NoTrafficError
 from app.domain.kpi.periods import NoMatureDataError
+from app.logging import exception_details
 
 PROBLEM_JSON = "application/problem+json"
 log = structlog.get_logger()
@@ -65,5 +66,10 @@ def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(Exception)
     async def _unhandled(request: Request, exc: Exception) -> JSONResponse:
         # Never leak internals to the client; details go to the log only.
-        log.error("unhandled_exception", error_type=type(exc).__name__)
+        log.error(
+            "unhandled_exception",
+            request_id=getattr(request.state, "request_id", None),
+            org_id=getattr(request.state, "org_id", None),
+            **exception_details(exc),
+        )
         return problem(request, 500, "Internal server error")

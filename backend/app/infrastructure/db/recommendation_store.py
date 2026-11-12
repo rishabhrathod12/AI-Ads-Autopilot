@@ -9,18 +9,16 @@ from uuid import UUID
 
 from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.recommendations import (
     ApprovalRecord,
-    AuditEntry,
     Decision,
     ExecutionAttempt,
     Recommendation,
     RecType,
     Status,
 )
-from app.infrastructure.db.models import AuditLog
+from app.infrastructure.db.audit_store import SqlAuditStore
 from app.infrastructure.db.recommendation_models import (
     ApprovalRow,
     ExecutionAttemptRow,
@@ -51,10 +49,8 @@ def _rec(r: RecommendationRow) -> Recommendation:
     )
 
 
-class SqlRecommendationStore:
-    def __init__(self, session: AsyncSession, organization_id: UUID) -> None:
-        self._s = session
-        self._org = organization_id
+class SqlRecommendationStore(SqlAuditStore):
+    """Recommendations plus (inherited) the append-only audit trail, in one session."""
 
     async def add_new(self, recs: Sequence[Recommendation]) -> list[Recommendation]:
         created: list[Recommendation] = []
@@ -182,45 +178,6 @@ class SqlRecommendationStore:
                 status=r.status,
                 reason=r.reason,
                 dry_run=r.dry_run,
-                created_at=r.created_at,
-            )
-            for r in rows
-        ]
-
-    async def add_audit(self, entry: AuditEntry) -> None:
-        self._s.add(
-            AuditLog(
-                id=entry.id,
-                organization_id=entry.organization_id,
-                actor=entry.actor,
-                action=entry.action,
-                entity_type=entry.entity_type,
-                entity_id=entry.entity_id,
-                before=entry.before,
-                after=entry.after,
-                request_id=entry.request_id,
-                created_at=entry.created_at,
-            )
-        )
-        await self._s.flush()
-
-    async def audit_log(self, *, limit: int = 100) -> list[AuditEntry]:
-        rows = (
-            await self._s.execute(
-                select(AuditLog).order_by(AuditLog.created_at.desc(), AuditLog.id).limit(limit)
-            )
-        ).scalars()
-        return [
-            AuditEntry(
-                id=r.id,
-                organization_id=r.organization_id,
-                actor=r.actor,
-                action=r.action,
-                entity_type=r.entity_type or "",
-                entity_id=r.entity_id or "",
-                before=r.before,
-                after=r.after,
-                request_id=r.request_id,
                 created_at=r.created_at,
             )
             for r in rows

@@ -8,16 +8,16 @@ from collections.abc import Sequence
 from typing import Protocol
 from uuid import UUID
 
+from app.application.ports.audit_store import AuditStore
 from app.domain.recommendations import (
     ApprovalRecord,
-    AuditEntry,
     ExecutionAttempt,
     Recommendation,
     Status,
 )
 
 
-class RecommendationStore(Protocol):
+class RecommendationStore(AuditStore, Protocol):
     async def add_new(self, recs: Sequence[Recommendation]) -> list[Recommendation]:
         """Insert recommendations not already stored (same organization and content hash).
 
@@ -46,7 +46,3 @@ class RecommendationStore(Protocol):
     async def add_execution_attempt(self, attempt: ExecutionAttempt) -> None: ...
 
     async def executions(self, *, limit: int = 100) -> list[ExecutionAttempt]: ...
-
-    async def add_audit(self, entry: AuditEntry) -> None: ...
-
-    async def audit_log(self, *, limit: int = 100) -> list[AuditEntry]: ...

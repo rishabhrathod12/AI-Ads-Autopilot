@@ -1,6 +1,7 @@
 """FastAPI application factory."""
 
 import re
+import time
 import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
@@ -28,6 +29,24 @@ from app.startup_checks import (
 )
 
 log = structlog.get_logger()
+
+
+def _access_log(request: Request, status: int, duration_ms: float) -> None:
+    """One line per request. Deliberately omits the query string, headers and bodies: they can
+    carry tokens and personal data. The route template (``/recommendations/{rec_id}``) is logged
+    instead of the raw path so identifiers do not end up in logs."""
+    route = request.scope.get("route")
+    log.info(
+        "request",
+        method=request.method,
+        route=getattr(route, "path", "unmatched"),
+        status=status,
+        duration_ms=round(duration_ms, 1),
+        request_id=getattr(request.state, "request_id", None),
+        org_id=getattr(request.state, "org_id", None),
+        role=getattr(request.state, "role", None),
+    )
+
 
 # A caller-supplied correlation id is bound into every log line and echoed back, so only a short,
 # plain token is accepted; anything else (newlines, spaces, long strings) is replaced.
@@ -91,9 +110,15 @@ def create_app(
         request.state.request_id = request_id
         structlog.contextvars.clear_contextvars()
         structlog.contextvars.bind_contextvars(request_id=request_id)
-        response = await call_next(request)
-        response.headers["X-Request-ID"] = request_id
-        return response
+        started = time.perf_counter()
+        status = 500
+        try:
+            response = await call_next(request)
+            status = response.status_code
+            response.headers["X-Request-ID"] = request_id
+            return response
+        finally:
+            _access_log(request, status, (time.perf_counter() - started) * 1000)
 
     register_error_handlers(app)
     app.include_router(analytics_router)

@@ -21,17 +21,18 @@ from app.api.serialize import MOCK_NOTICE
 from app.api.tenancy import current_principal, require_role, tenant_of
 from app.application.analytics.dashboard import NoDataError
 from app.application.analytics.thresholds import DEFAULT_TARGET_ACOS_PCT, DEFAULT_WINDOW_DAYS
+from app.application.audit import audit_entry
 from app.application.jsonable import to_jsonable
 from app.application.optimization.generate import generate_recommendations
 from app.application.ports.performance_reader import PerformanceReader
 from app.application.ports.recommendation_store import RecommendationStore
 from app.application.recommendations.service import Actor, RecommendationService
 from app.config import Settings
+from app.domain.audit import AuditEntry
 from app.domain.auth import Principal, Role
 from app.domain.kpi.periods import DateRange
 from app.domain.recommendations import (
     ApprovalRecord,
-    AuditEntry,
     Decision,
     ExecutionAttempt,
     ExpiredError,
@@ -191,8 +192,19 @@ async def generate(
         now,
         target_acos_pct=DEFAULT_TARGET_ACOS_PCT,
     )
-    created = await deps.service.add_generated(
-        result.recommendations, _actor(request, principal), now
+    actor = _actor(request, principal)
+    created = await deps.service.add_generated(result.recommendations, actor, now)
+    await deps.store.add_audit(
+        audit_entry(
+            org=deps.organization_id,
+            actor=actor.subject,
+            action="recommendations.generated",
+            entity_type="recommendation_batch",
+            entity_id=f"{result.period.start}..{result.period.end}",
+            now=now,
+            request_id=actor.request_id,
+            after={"proposed": len(result.recommendations), "created": created},
+        )
     )
     return {
         "data": {
@@ -329,7 +341,18 @@ async def list_executions(
 @router.get("/audit-logs")
 async def audit_logs(
     limit: Annotated[int, Query(ge=1, le=200)] = 100,
+    action: Annotated[str | None, Query(max_length=100)] = None,
+    entity_type: Annotated[str | None, Query(max_length=100)] = None,
+    entity_id: Annotated[str | None, Query(max_length=100)] = None,
+    before: Annotated[datetime | None, Query(description="Only entries older than this")] = None,
     _principal: Principal = ADMIN,
     deps: RecoDeps = Depends(get_reco_deps),
 ) -> dict[str, Any]:
-    return {"data": [_audit(e) for e in await deps.store.audit_log(limit=limit)]}
+    """Newest first. Page backwards by passing the last entry's `created_at` as `before`."""
+    entries = await deps.store.audit_log(
+        limit=limit, action=action, entity_type=entity_type, entity_id=entity_id, before=before
+    )
+    return {
+        "data": [_audit(e) for e in entries],
+        "next_before": to_jsonable(entries[-1].created_at) if len(entries) == limit else None,
+    }

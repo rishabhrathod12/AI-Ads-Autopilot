@@ -2,11 +2,12 @@
 
 import dataclasses
 from collections.abc import Sequence
+from datetime import datetime
 from uuid import UUID
 
+from app.domain.audit import AuditEntry
 from app.domain.recommendations import (
     ApprovalRecord,
-    AuditEntry,
     ExecutionAttempt,
     Recommendation,
     Status,
@@ -71,5 +72,21 @@ class MemoryRecommendationStore:
     async def add_audit(self, entry: AuditEntry) -> None:
         self.audit.append(entry)
 
-    async def audit_log(self, *, limit: int = 100) -> list[AuditEntry]:
-        return list(reversed(self.audit))[:limit]
+    async def audit_log(
+        self,
+        *,
+        limit: int = 100,
+        action: str | None = None,
+        entity_type: str | None = None,
+        entity_id: str | None = None,
+        before: datetime | None = None,
+    ) -> list[AuditEntry]:
+        rows = [
+            e
+            for e in reversed(self.audit)
+            if (action is None or e.action == action)
+            and (entity_type is None or e.entity_type == entity_type)
+            and (entity_id is None or e.entity_id == entity_id)
+            and (before is None or e.created_at < before)
+        ]
+        return rows[:limit]

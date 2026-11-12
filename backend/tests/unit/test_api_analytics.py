@@ -22,6 +22,7 @@ from app.domain.auth import Principal, Role
 from app.infrastructure.providers.mock.generator import GeneratedData, MockConfig, generate
 from app.startup_checks import UnsafeConfigurationError
 from tests.unit.fake_reader import FakeReader
+from tests.unit.memory_audit_store import MemoryAuditStore
 
 END = date(2026, 10, 31)
 NOW = datetime(2026, 11, 1, 6, 0, tzinfo=UTC)
@@ -59,12 +60,17 @@ def data() -> GeneratedData:
 
 
 @pytest.fixture
-def client(data: GeneratedData) -> Iterator[TestClient]:
+def audit() -> MemoryAuditStore:
+    return MemoryAuditStore()
+
+
+@pytest.fixture
+def client(data: GeneratedData, audit: MemoryAuditStore) -> Iterator[TestClient]:
     app = create_app(Settings(_env_file=None))
     reader, store = FakeReader(data, ORG, NOW), MemoryForecastStore()
 
     async def scope() -> AsyncIterator[Scope]:
-        yield Scope(ORG, reader, store)
+        yield Scope(ORG, reader, store, audit)
 
     async def analyst() -> Principal:  # authentication is tested in test_auth.py
         return Principal("test-user", ORG, Role.ANALYST)
@@ -347,3 +353,15 @@ def test_envelope_lifts_provenance_and_flags_non_mock_sources() -> None:
     assert body["meta"]["synthetic"] is False
     assert body["meta"]["notice"] is None
     assert body["meta"]["data_sources"] == ["AMAZON_ADS_API"]
+
+
+def test_creating_a_forecast_is_audited_with_the_run_ids(
+    client: TestClient, audit: MemoryAuditStore
+) -> None:
+    created = client.post("/api/v1/forecasts/account", headers={"X-Request-ID": "fc-1"})
+    assert created.status_code == 201
+    (entry,) = audit.entries
+    assert entry.action == "forecast.created" and entry.request_id == "fc-1"
+    assert entry.actor == "test-user" and entry.organization_id == ORG
+    assert set(entry.after["run_ids"]) == {"spend", "sales"}  # type: ignore[index]
+    assert entry.after["run_ids"] == created.json()["data"]["run_ids"]  # type: ignore[index]

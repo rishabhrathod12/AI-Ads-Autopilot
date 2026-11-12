@@ -29,4 +29,5 @@ Authentication (Step A, ADR 0021) IMPLEMENTED 2026-11-12: provider-independent J
 Not done: identity provider choice, user provisioning, frontend login, SQL membership test run (unverified: no test DB).
 M6 approval workflow (Step B) IMPLEMENTED 2026-11-12 (ADR 0022): proposals, hash-bound approval, expiry, idempotency, audit, blocked execution.
 Nothing is ever executed. Migration 0006 + SQL store + RLS/grants UNVERIFIED (no test database); 3+7 DB tests skipped.
+Observability/audit hygiene (M7 per the owner's numbering, ADR 0023) IMPLEMENTED 2026-11-12: value redaction, access log, safe error logs, audit for every write.
 Next: owner review; verify DB tests; verify DB tests as soon as TEST_DATABASE_URL is usable.

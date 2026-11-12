@@ -15,11 +15,13 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
+from app.application.audit import audit_entry
+from app.application.llm.redact import redact
 from app.application.ports.recommendation_store import RecommendationStore
+from app.domain.audit import AuditEntry
 from app.domain.recommendations import (
     APPROVAL_TTL,
     ApprovalRecord,
-    AuditEntry,
     Decision,
     ExecutionAttempt,
     ExpiredError,
@@ -56,17 +58,16 @@ def _audit(
     before: dict[str, Any] | None,
     after: dict[str, Any] | None,
 ) -> AuditEntry:
-    return AuditEntry(
-        id=uuid.uuid4(),
-        organization_id=org,
+    return audit_entry(
+        org=org,
         actor=actor.subject,
         action=action,
         entity_type="recommendation",
         entity_id=str(rec.id),
+        now=now,
+        request_id=actor.request_id,
         before=before,
         after=after,
-        request_id=actor.request_id,
-        created_at=now,
     )
 
 
@@ -144,7 +145,7 @@ class RecommendationService:
             recommendation_id=rec_id,
             decided_by=actor.subject,
             decision=decision,
-            comment=comment,
+            comment=redact(comment) if comment is not None else None,
             content_hash=approved_hash,
             decided_at=now,
         )

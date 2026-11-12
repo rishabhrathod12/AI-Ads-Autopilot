@@ -73,6 +73,7 @@ Conventions in force:
 | `GET /recommendations/{id}` | viewer | one proposal with its approval record, if any |
 | `POST /recommendations/{id}/approve`, `/reject` | admin | body `{content_hash, comment?}`; the hash must equal the stored content's hash (409 otherwise); only from `pending` and before expiry; identical repeat returns the original with `replayed: true` |
 | `POST /recommendations/{id}/execute` | admin | records a blocked attempt and always answers 409 (`execution_disabled`, `not_approved`, `approval_expired`, `content_changed_since_approval` or `no_execution_provider`); nothing is ever sent |
-| `GET /executions`, `GET /audit-logs` | admin | append-only history |
+| `GET /executions` | admin | append-only history |
+| `GET /audit-logs` | admin | newest first; filters `action`, `entity_type`, `entity_id`; page backwards with `before` (`next_before` in the response) |
 
 404 unknown recommendation (including another tenant's), 409 not pending / expired / hash mismatch / execution blocked, 422 malformed hash or unknown body fields.

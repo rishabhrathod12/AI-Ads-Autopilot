@@ -58,6 +58,9 @@ Deterministic bid/budget/negative-keyword proposals with guardrails, lifecycle, 
 Original scope:
 Bid/budget/negative-keyword recommendations, approval workflow, audit logs, gated execution (disabled). **Exit:** guardrail violations = 0; approval flow end-to-end on mock.
 
+## Observability and audit hygiene (ADR 0023) – IMPLEMENTED, pending owner review
+Value-level log redaction, access log, safe exception logging, audit for every state-changing route, scrubbed audit content, audit filters. Unverified: SQL audit filters (no test database). Not done: metrics, tracing, alerting, retention.
+
 ## M7 – Evaluation and Testing
 Unit/integration/agent/ML evals, security and performance tests. **Exit:** coverage and eval targets met.
 
