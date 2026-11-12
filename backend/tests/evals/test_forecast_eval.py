@@ -78,7 +78,9 @@ def holdout_case(seed: int, scope: str, metric: str, values: np.ndarray, end: da
         return None
     history, actual = values[:-HORIZON], values[-HORIZON:]
     history_end = end - timedelta(days=HORIZON)
-    result = forecast_series(history, history_end)
+    # Scores the learned-model selection rule itself (the shipped default is seasonal-naive,
+    # which would trivially tie the baseline).
+    result = forecast_series(history, history_end, allow_learned=True)
     baseline = SeasonalNaive().forecast(history, HORIZON, history_end.weekday())
     point = np.asarray(result.point, dtype=float)
     lower, upper = np.asarray(result.lower, dtype=float), np.asarray(result.upper, dtype=float)

@@ -1,5 +1,6 @@
 """FastAPI application factory."""
 
+import re
 import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
@@ -25,6 +26,10 @@ from app.startup_checks import (
 )
 
 log = structlog.get_logger()
+
+# A caller-supplied correlation id is bound into every log line and echoed back, so only a short,
+# plain token is accepted; anything else (newlines, spaces, long strings) is replaced.
+_REQUEST_ID = re.compile(r"[A-Za-z0-9._-]{1,64}")
 
 
 def create_app(
@@ -67,7 +72,8 @@ def create_app(
     async def request_id_middleware(
         request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
-        request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+        supplied = request.headers.get("X-Request-ID", "")
+        request_id = supplied if _REQUEST_ID.fullmatch(supplied) else str(uuid.uuid4())
         request.state.request_id = request_id
         structlog.contextvars.clear_contextvars()
         structlog.contextvars.bind_contextvars(request_id=request_id)

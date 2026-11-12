@@ -23,6 +23,10 @@ FloatArr = NDArray[np.float64]
 MIN_TRAIN_DAYS = 60
 FOLD_STEP_DAYS = 7
 MODEL_MARGIN = 0.05  # a model must beat seasonal-naive's MAE by at least 5%
+# Fresh-seed evaluation (ML_EVALUATION.md 4b) showed the learned models do not reliably beat
+# seasonal-naive, so by default the forecast IS seasonal-naive (owner decision). Every candidate
+# is still backtested and its scores reported; learned models are opt-in via ``allow_learned=True``.
+LEARNED_MODELS_SELECTABLE = False
 INTERVAL_LEVEL = 0.80
 BASELINE = "seasonal_naive"
 _BASELINE_NAMES = {"naive", "moving_average_7", "seasonal_naive", "seasonal_mean_4"}
@@ -67,7 +71,9 @@ def _band(errors: FloatArr, level: float) -> tuple[float, float]:
     return float(lo), float(hi)
 
 
-def select_model(bt: Backtest, margin: float = MODEL_MARGIN) -> tuple[str, bool, str]:
+def select_model(
+    bt: Backtest, margin: float = MODEL_MARGIN, *, allow_learned: bool = True
+) -> tuple[str, bool, str]:
     """(model name, used_baseline, reason)."""
     pooled = {m: bt.pooled(m).mae for m in bt.forecasts}
     base = pooled[BASELINE]
@@ -82,6 +88,7 @@ def select_model(bt: Backtest, margin: float = MODEL_MARGIN) -> tuple[str, bool,
         and v <= (1.0 - margin) * base
         and wins[m] * 2 > len(bt.origins)
         and m not in _BASELINE_NAMES
+        and allow_learned
     }
     if contenders:
         best = min(contenders, key=lambda m: contenders[m])
@@ -94,13 +101,22 @@ def select_model(bt: Backtest, margin: float = MODEL_MARGIN) -> tuple[str, bool,
                 f"{wins[best]}/{len(bt.origins)} backtest folds"
             ),
         )
+    if not allow_learned:
+        # Default policy (ADR 0013 update): seasonal-naive, regardless of how other baselines or
+        # learned models scored. Their backtest scores are still reported as experimental.
+        return (
+            BASELINE,
+            True,
+            "default forecast: seasonal-naive (learned models are experimental: not shown to "
+            "beat it on held-out data)",
+        )
     best_baseline = min((m for m in pooled if m in _BASELINE_NAMES), key=lambda m: pooled[m])
     return (
         best_baseline,
         True,
         (
-            "no learned model beat seasonal-naive by "
-            f"{margin * 100:.0f}% in the backtest; using the best baseline ({best_baseline})"
+            f"no learned model beat seasonal-naive by {margin * 100:.0f}% in the backtest; "
+            f"using the best baseline ({best_baseline})"
         ),
     )
 
@@ -114,6 +130,7 @@ def forecast_series(
     step: int = FOLD_STEP_DAYS,
     level: float = INTERVAL_LEVEL,
     forecasters: list[Forecaster] | None = None,
+    allow_learned: bool | None = None,
 ) -> SeriesForecast:
     """``values``: consecutive daily MATURE values ending on ``end_date`` (missing days as 0)."""
     y = np.asarray(values, dtype=float)
@@ -132,7 +149,10 @@ def forecast_series(
     )
     if BASELINE not in bt.forecasts:
         raise InsufficientHistoryError("baseline could not be evaluated")
-    name, used_baseline, reason = select_model(bt)
+    name, used_baseline, reason = select_model(
+        bt,
+        allow_learned=LEARNED_MODELS_SELECTABLE if allow_learned is None else allow_learned,
+    )
 
     # Intervals from out-of-sample relative errors of the chosen model.
     folds = len(bt.origins)

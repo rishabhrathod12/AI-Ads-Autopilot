@@ -1,3 +1,4 @@
+import uuid
 from collections.abc import Iterator
 
 import pytest
@@ -26,6 +27,14 @@ def test_health_reports_mock_and_execution_disabled(client: TestClient) -> None:
     assert body["status"] == "ok"
     assert body["data_source"] == "MOCK"
     assert body["execution_enabled"] is False
+
+
+@pytest.mark.parametrize("bad", ["a b", "x" * 65, "id;drop", "café"])
+def test_unsafe_request_ids_are_replaced(client: TestClient, bad: str) -> None:
+    # httpx cannot encode non-ASCII str headers, so send raw bytes as a real client could.
+    got = client.get("/health", headers={b"X-Request-ID": bad.encode()}).headers["X-Request-ID"]
+    assert got != bad
+    assert uuid.UUID(got)
 
 
 def test_request_id_is_echoed_and_generated(client: TestClient) -> None:

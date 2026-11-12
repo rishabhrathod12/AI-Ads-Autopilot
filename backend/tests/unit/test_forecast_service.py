@@ -76,6 +76,16 @@ def test_a_model_that_wins_on_average_but_not_in_most_folds_is_rejected() -> Non
     assert (name, baseline) == ("seasonal_naive", True)
 
 
+def test_learned_models_disabled_selects_seasonal_naive_not_the_best_baseline() -> None:
+    bt = make_backtest(
+        {"seasonal_naive": [10] * 5, "naive": [4] * 5, "ets": [3] * 5, "ridge": [2] * 5}
+    )
+    name, baseline, reason = select_model(bt, allow_learned=False)
+    assert (name, baseline) == ("seasonal_naive", True)
+    assert "experimental" in reason
+    assert select_model(bt)[0] == "ridge"  # the opt-in rule is unchanged
+
+
 def test_baselines_are_never_reported_as_learned_models() -> None:
     bt = make_backtest({"seasonal_naive": [10] * 5, "seasonal_mean_4": [5] * 5})
     name, baseline, _ = select_model(bt)
@@ -98,8 +108,17 @@ def test_forecast_shape_and_interval_ordering() -> None:
     assert f.failed_models == {}
 
 
-def test_noisy_weekly_series_picks_a_smoothing_model_over_seasonal_naive() -> None:
-    f = forecast_series(weekly(110, noise=14.0, seed=5), END)
+def test_default_forecast_is_seasonal_naive_even_when_a_learned_model_would_win() -> None:
+    y = weekly(110, noise=14.0, seed=5)
+    f = forecast_series(y, END)
+    assert (f.selected_model, f.used_baseline) == ("seasonal_naive", True)
+    assert "experimental" in f.reason
+    assert {"ets", "ridge", "gbm"} <= set(f.scores)  # learned models are still backtested
+    assert f.point == forecast_series(y, END, allow_learned=False).point
+
+
+def test_noisy_weekly_series_picks_a_smoothing_model_when_learned_models_are_enabled() -> None:
+    f = forecast_series(weekly(110, noise=14.0, seed=5), END, allow_learned=True)
     assert f.selected_model != "seasonal_naive"
     assert f.scores[f.selected_model].mae < f.scores["seasonal_naive"].mae
 

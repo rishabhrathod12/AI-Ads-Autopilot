@@ -26,6 +26,7 @@ END = date(2026, 10, 31)
 NOW = datetime(2026, 11, 1, 6, 0, tzinfo=UTC)
 ORG = UUID("66666666-6666-4666-8666-666666666666")
 MATURE_END = END - timedelta(days=3)
+QueryValue = str | int | float | bool
 
 
 class MemoryForecastStore:
@@ -69,7 +70,7 @@ def client(data: GeneratedData) -> Iterator[TestClient]:
         yield c
 
 
-def get(client: TestClient, path: str, **params: object) -> dict:  # type: ignore[type-arg]
+def get(client: TestClient, path: str, **params: QueryValue | None) -> dict:  # type: ignore[type-arg]
     r = client.get(path, params={k: v for k, v in params.items() if v is not None})
     assert r.status_code == 200, r.text
     return r.json()  # type: ignore[no-any-return]
@@ -254,7 +255,7 @@ def test_anomalies_endpoint(client: TestClient) -> None:
     ],
 )
 def test_invalid_requests_are_422_problem_details(
-    client: TestClient, path: str, params: dict[str, object]
+    client: TestClient, path: str, params: dict[str, QueryValue]
 ) -> None:
     r = client.get(path, params=params)
     assert r.status_code == 422
