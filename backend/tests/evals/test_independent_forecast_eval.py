@@ -19,7 +19,8 @@ change the default by themselves and any change needs an owner decision:
   R1  opt-in learned selection: holdout MAE <= seasonal-naive in >= 70% of cases AND mean
       relative MAE improvement >= 5%
   R2  seasonal_mean_4: the same two bars
-A failed criterion is a recorded known failure, not a reason to change the criterion or the generator.
+A failed criterion is a recorded known failure, not a reason to change the criterion or the
+generator.
 Seeds 101-120 are used for nothing else; they are spent after this run.
 
 Synthetic data: these results say nothing about real Amazon accounts.
