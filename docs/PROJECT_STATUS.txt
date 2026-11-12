@@ -1,0 +1,22 @@
+ADPILOT AI - PROJECT STATUS (verified by audit 2026-11-12; supersedes optimistic claims elsewhere)
+
+Data: MOCK only. No Amazon Ads API integration. AD_EXECUTION_ENABLED=false (startup refuses true).
+
+M0 Planning ............ complete
+M1 Foundation .......... mostly done; docker compose stack never run (no Docker on dev machine)
+M2 Mock data/providers . implemented; DB-backed tests not run in this environment
+M3 Analytics and ML .... implemented; accuracy gates NOT met (see docs/ML_EVALUATION.md)
+                         - negative-term precision 0.77 vs 0.85 (known failure)
+                         - learned forecast not shown to beat seasonal-naive -> default forecast is seasonal-naive
+                         - evals use the same generator as the data: no real-account accuracy evidence
+M4 GenAI and RAG ....... implemented; small single-sample evaluations only
+M5 Multi-agent ......... partial: supervisor + 4 read-only specialists; no Bid/Budget agents, no checkpointer
+M6 Approval workflow ... not started (needs real authentication first, ADR 0008)
+M7 Audit/observability . partial (structured logs, request ids); no audit log table
+M8 Deployment .......... not started
+M9 Amazon Ads API ...... not started
+
+Latest checks (2026-11-12): ruff, ruff format, mypy strict, import-linter pass; frontend lint/typecheck/48 tests pass;
+backend pytest: all unit tests pass, 61 Postgres tests skipped (no TEST_DATABASE_URL).
+
+Current work: M3 close-out. Next: run Postgres-backed tests, record limitations, independent eval signal.

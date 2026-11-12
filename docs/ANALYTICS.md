@@ -71,6 +71,8 @@ CUSUM change detection over the last 14 mature days against the 56 before them, 
 
 ## 6. Forecasting (`app/application/forecasting`)
 
+**Default is seasonal-naive** (ADR 0013 update): learned models are backtested and reported as experimental, selectable only with `allow_learned=True`.
+
 Daily spend and sales, 14-day horizon, account and campaign level; ACOS is derived from the two forecasts, never forecast alone ([ADR 0013](ADR/0013-forecast-model-selection-rule.md)).
 
 - Needs >= 74 mature days (60 to train + one 14-day fold); otherwise it refuses.

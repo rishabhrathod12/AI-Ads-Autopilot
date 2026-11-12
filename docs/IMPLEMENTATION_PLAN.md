@@ -38,8 +38,8 @@ See [ANALYTICS.md](ANALYTICS.md) and [ML_EVALUATION.md](ML_EVALUATION.md). **Exi
 - **Not verified:** analytics query timing (< 1 s on the 646k-row seed) and the `EXPLAIN` index review; the Docker Compose stack.
 - **Verified in CI:** backend (full suite incl. Postgres RLS tests; 306 tests pass locally), frontend and gitleaks jobs on `2d1a1bd`. The first run on `2048180` failed only in the gitleaks job (cause unconfirmed; a local gitleaks scan of all history found no leaks).
 - **Re-scored on fresh seeds 6-10 with restated truth** (ML_EVALUATION.md 2b): wasted precision and negative recall now pass; negative precision fails (0.77 vs 0.85, recorded as known); negative precision diagnosed as weak converters, not irrelevant terms (not changed). **Forecast re-score on 30 fresh account cases also failed** (63% not worse, mean -6.7% vs seasonal-naive; ML_EVALUATION.md 4b), so the learned forecast is not shown to beat the baseline.
-- Owner decisions pending: how to treat the remaining failed checks (negative precision, forecast vs seasonal-naive); originally the three (re-state criteria and validate on fresh seeds, change
-  rules, or accept).
+- **Owner decision (2026-11-12):** the default forecast is seasonal-naive; learned models are experimental and opt-in (ADR 0013 update, ML_EVALUATION.md 4c). Negative precision stays a recorded known failure.
+- **M3 close-out in progress:** (1) tree cleanup, docs and status files; (2) run the Postgres-backed tests and compose stack; (3) record known limitations; (4) add an independent evaluation signal on fresh seeds.
 
 ## M4 – GenAI and RAG (IMPLEMENTED, pending owner review; see docs/ASSISTANT.md)
 `LLMClient` port with cost caps, read-only tool calling over analytics, pgvector knowledge base, code-based faithfulness validator, chat API and UI. **Exit:** golden Q&A with traceable numbers: met on the pre-registered counts; run 2 followed a prompt change and is not held-out; a 12-question held-out check passed (all criteria, $0.031). Known gaps listed in ASSISTANT.md.

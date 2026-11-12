@@ -141,6 +141,13 @@ the models' errors are large in a few series, and a learned model won in every c
 filtering anything. Options for an owner decision (each needs fresh seeds): ship seasonal-naive/4-week mean as the default
 forecast and show the learned models as experimental; require a much larger margin or a stability check; or average models.
 
+### 4c. Shipped default after 4b (owner decision, 2026-11-12)
+
+The default forecast is now seasonal-naive; learned models are backtested and reported as experimental and are opt-in
+(`allow_learned=True`, ADR 0013 update). The held-out forecast evaluations still score the learned selection rule, and
+their failures remain recorded as strict known failures. The change removes the risk of shipping a forecast worse than
+the baseline; it does not make the forecast more accurate.
+
 ## 5. Plan deviations, with reasons
 
 | Plan said | What happened | Why |
