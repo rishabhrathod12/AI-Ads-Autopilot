@@ -14,6 +14,7 @@ from sqlalchemy import text
 from app.api.errors import problem, register_error_handlers
 from app.api.routers.analytics import router as analytics_router
 from app.api.routers.assistant import router as assistant_router
+from app.api.routers.recommendations import router as recommendations_router
 from app.config import Settings
 from app.infrastructure.auth.jwt_verifier import JwtVerifier, jwks_key_resolver
 from app.infrastructure.db.session import create_engine
@@ -97,6 +98,7 @@ def create_app(
     register_error_handlers(app)
     app.include_router(analytics_router)
     app.include_router(assistant_router)
+    app.include_router(recommendations_router)
 
     @app.get("/health")
     async def health() -> dict[str, Any]:

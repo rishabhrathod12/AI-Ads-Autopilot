@@ -12,6 +12,7 @@ from app.infrastructure.db import (  # noqa: F401  (register tables on Base.meta
     assistant_models,
     forecast_models,
     knowledge_models,
+    recommendation_models,
 )
 from app.infrastructure.db.models import Base
 from app.infrastructure.db.session import create_engine

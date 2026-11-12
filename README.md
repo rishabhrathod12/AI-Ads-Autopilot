@@ -4,7 +4,7 @@ AI-powered Amazon PPC (Sponsored Products) analysis and optimization platform.
 Agentic AI + Generative AI + Machine Learning, built as a portfolio project with a path to a multi-tenant SaaS.
 
 > **Status: M5 (multi-agent graph, reporting) implemented, pending owner review; three M3 accuracy checks that failed are documented.**
-> The graph is opt-in (`ASSISTANT_ENGINE=graph`; default `single`). No approval workflow (M6) or Amazon connectivity yet. The default forecast is seasonal-naive (learned models are experimental). See [docs/PROJECT_STATUS.txt](docs/PROJECT_STATUS.txt).
+> The graph is opt-in (`ASSISTANT_ENGINE=graph`; default `single`). The approval workflow (M6) exists but nothing is ever executed; no Amazon connectivity. The default forecast is seasonal-naive (learned models are experimental). See [docs/PROJECT_STATUS.txt](docs/PROJECT_STATUS.txt).
 > **Data: MOCK only.** No Amazon Ads API connection exists or is simulated. Synthetic data is always labeled `MOCK`.
 > **Safety: `AD_EXECUTION_ENABLED=false`.** No advertising changes are ever made without explicit human approval.
 

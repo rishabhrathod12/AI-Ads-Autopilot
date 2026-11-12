@@ -62,4 +62,17 @@ Conventions in force:
   404 no data, 422 invalid parameters or a period with no mature days or too little history to forecast, 503 no database.
 - Response bodies are serialised generically (the OpenAPI document does not yet describe the `data` shapes in
   detail); typed response models are planned with the frontend.
-- Not implemented yet: campaign-level forecast endpoints, report downloads, assistant, approvals, sync triggers.
+- Not implemented yet: campaign-level forecast endpoints, sync triggers, approval screens in the UI.
+
+## Implemented (M6): recommendations and approval ([ADR 0022](ADR/0022-approval-workflow-and-recommendation-calculators.md))
+
+| Endpoint | Role | Behavior |
+|---|---|---|
+| `POST /recommendations/generate` | analyst | compute proposals from the analytics; stores new ones as `pending`; idempotent; 201 |
+| `GET /recommendations?status=` | viewer | list; every item has `evidence`, `content_hash`, `expires_at`, MOCK notice |
+| `GET /recommendations/{id}` | viewer | one proposal with its approval record, if any |
+| `POST /recommendations/{id}/approve`, `/reject` | admin | body `{content_hash, comment?}`; the hash must equal the stored content's hash (409 otherwise); only from `pending` and before expiry; identical repeat returns the original with `replayed: true` |
+| `POST /recommendations/{id}/execute` | admin | records a blocked attempt and always answers 409 (`execution_disabled`, `not_approved`, `approval_expired`, `content_changed_since_approval` or `no_execution_provider`); nothing is ever sent |
+| `GET /executions`, `GET /audit-logs` | admin | append-only history |
+
+404 unknown recommendation (including another tenant's), 409 not pending / expired / hash mismatch / execution blocked, 422 malformed hash or unknown body fields.

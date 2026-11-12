@@ -41,6 +41,8 @@ No further agents. Wasted spend and negative keywords stay in Keyword Intelligen
 Schema validity; evidence present and resolvable; numbers in prose match tool results; guardrails (bid change caps, min clicks/orders, budget conservation); tenant match. Failure -> retry once or degrade.
 
 ## 7. Human-in-the-loop
+**As built (ADR 0022):** the Bid and Budget proposals are deterministic calculators (`application/optimization`), not LLM specialists; no graph node writes anything. Wrapping them as read-only specialists and adding an approval interrupt with a Postgres checkpointer is not done.
+
 Recommendations are persisted as `pending`. Only an authorized human approval moves them forward. Execution is a separate, gated service, outside the agent graph.
 
 ## 8. Evaluation plan (M7)

@@ -52,6 +52,7 @@ Alembic only; no manual DDL; every migration reviewed; RLS policies are part of 
 
 ## 7. Implemented so far
 - M1: `organizations`, `users`, `memberships`, `audit_logs` (insert-only), RLS (`0001`).
+- M6: `recommendations`, `approval_records` (one per recommendation, insert-only), `execution_attempts` (insert-only, status `blocked` only) (`0006`, UNVERIFIED against a database); `audit_logs` receives every status change. The app role may update only `recommendations.status`.
 - M2: `seller_accounts`, `advertising_profiles`, `campaigns`, `ad_groups`, `keywords_targets`, `search_terms`,
   `report_runs`, `performance_daily` (`0002`). All have RLS; the app role has no DELETE. Internal ids are deterministic
   `uuid5(organization_id, kind:external_id)`, which makes syncs idempotent without lookups. `performance_daily` uses a

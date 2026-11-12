@@ -25,6 +25,8 @@ Agents have no write tools. Retrieved text and tool output treated as data. Stru
 Append-only; records recommendations, approvals, rejections, execution attempts with actor, before/after, request ID.
 
 ## 9. Execution safeguards
+**Implemented (ADR 0022, database layer unverified):** approval is bound to the content hash and expires; only admin/owner decide; every decision, expiry and blocked execution is audited in the same transaction; the execute endpoint always answers 409 and no code calls a provider. The list below is the target for M9.
+
 - Startup fails if `AD_EXECUTION_ENABLED=true` and any of: non-mock provider, approval service, authorization checks, audit sink is missing.
 - Execution requires: approved record by authorized human, unexpired recommendation, unchanged `content_hash`, successful audit write before the call.
 - Dry-run first; changes reversible with prior values stored.
