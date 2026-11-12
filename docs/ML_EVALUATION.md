@@ -148,6 +148,49 @@ The default forecast is now seasonal-naive; learned models are backtested and re
 their failures remain recorded as strict known failures. The change removes the risk of shipping a forecast worse than
 the baseline; it does not make the forecast more accurate.
 
+## 4d. Independent evaluations (M3 close-out step 4; criteria pre-registered in `1f83863`, run once)
+
+**Forecast on a differently-built generator** (`tests/evals/independent_series.py`: level drift and steps, evolving weekly shape, promotions and outliers that can fall in the holdout, wandering ROAS; seeds 101-120, 40 cases, 14-day holdout). Spent seeds: not reusable.
+
+| Model | MAE | RMSE | MAPE | WAPE | Not worse than seasonal-naive | Mean MAE gain |
+|---|---|---|---|---|---|---|
+| naive | 2.15M | 2.60M | 0.304 | 0.299 | 57% | -11.9% |
+| moving average 7 | 1.87M | 2.30M | 0.267 | 0.242 | 90% | +13.6% |
+| **seasonal-naive (shipped default)** | 2.23M | 3.19M | 0.308 | **0.294** | (reference) | 0 |
+| seasonal mean 4 | 1.63M | 2.12M | 0.236 | 0.222 | 80% | +15.2% |
+| ETS | 1.78M | 2.20M | 0.252 | 0.233 | 80% | +15.1% |
+| ridge | 1.82M | 2.24M | 0.255 | 0.238 | 75% | +10.7% |
+| gradient boosting | 1.81M | 2.28M | 0.255 | 0.235 | 72% | +12.5% |
+| opt-in selection rule | 1.81M | 2.23M | 0.248 | 0.230 | 85% | +17.1% |
+
+| Criterion | Bar | Result |
+|---|---|---|
+| S1 shipped default mean WAPE | <= 0.25 | **0.294 - fail** (recorded as strict known failure) |
+| S2 shipped default 80% interval coverage | 0.65-0.92 | 0.779 - pass |
+| S3 sane intervals | all | pass |
+| R1 opt-in selection: no worse in >= 70% and gain >= 5% | | 85%, +17.1% - pass |
+| R2 seasonal mean 4: same bars | | 80%, +15.2% - pass |
+
+**Reading.** This contradicts the mock-generator result (4b), where learned models were *worse* than seasonal-naive. On this source
+the shipped seasonal-naive default is the least accurate of the simple baselines, and the plain 4-week seasonal mean (no learning) is
+as good as any learned model. Two synthetic sources disagree, so neither is evidence about real accounts; the differences come from
+how much noise and level change each generator contains. The only supported conclusion is that seasonal-naive is a noisy default
+and `seasonal_mean_4` deserves a pre-registered comparison. **The default was not changed**; that needs an owner decision and fresh seeds.
+Caveat: the generator's design choices (promotions, outliers, lognormal noise) penalise "repeat last week" by construction.
+
+**Keyword findings against economic truth** (seeds 41-45; truth = true ACOS = observed CPC / (latent rate x account AOV) above an *assumed*
+30% break-even; mock data has no margins). Labels are independent of the generator's planted categories; the data is not.
+
+| Check | Bar | 30% | 25% | 40% |
+|---|---|---|---|---|
+| K1 confirmed negative terms truly unprofitable (69 terms over 5 seeds) | >= 0.85 | **0.934 - pass** | 0.934 | 0.898 |
+| K2 confirmed wasted targets truly unprofitable (166 targets) | >= 0.85 | **0.821 - fail** | 0.878 | 0.777 |
+
+K2 per-seed range 0.70-0.89; it is sensitive to the break-even assumption, and the pass/fail verdict would flip at 25%.
+Reading: judged by money rather than by the generator's labels, confirmed negative terms are mostly genuinely unprofitable, which
+supports the earlier diagnosis that the 0.77 "negative precision" failure was a label-definition gap. Confirmed wasted targets are
+less reliable (about 1 in 5 is not unprofitable at 30%). Terms or targets below 15 clicks are not scored.
+
 ## 5. Plan deviations, with reasons
 
 | Plan said | What happened | Why |
@@ -174,3 +217,4 @@ Recorded, not fixed; none is hidden by a changed threshold.
 5. **Anomaly detection** passes exactly at its limit (8/10) on one planted pattern (conversion-rate halving); CPC and spend anomalies were never planted, only false-positive behaviour was tested.
 6. **Unverified here:** analytics query timing, `EXPLAIN` index review, the Docker Compose stack, and (until a Postgres with pgvector is available) the 61 database-backed tests including RLS isolation.
 7. **Seeds already used** (1-15, 21-40) cannot be reused for new scored claims.
+8. **Independent evaluations (4d):** wasted-target "confirmed" findings are economically unprofitable in 82% of cases at an assumed 30% break-even (bar 0.85); the shipped seasonal-naive default has WAPE 0.294 on the independent series (bar 0.25), and simple smoothing baselines beat it there. The two synthetic sources disagree on whether learned models help; no real-account evidence.
