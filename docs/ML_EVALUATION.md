@@ -162,3 +162,15 @@ the baseline; it does not make the forecast more accurate.
 - Query timing for the analytics reader (dashboard under 1 s on the 646k-row seed) and the `EXPLAIN` index review.
 - The Docker Compose stack (Docker is not installed on the development machine).
 - Everything on real data.
+
+## 7. Known limitations (M3 close-out, 2026-11-12)
+
+Recorded, not fixed; none is hidden by a changed threshold.
+
+1. **No real-account evidence.** Every score comes from one synthetic generator that also planted the scenarios. They show the code behaves as designed, not accuracy on Amazon data.
+2. **Negative-term "confirmed" means weak converter.** Pooled precision on seeds 1-10 is 0.81 against the planted truth; seeds 6-10 scored 0.77 vs 0.85 (fail). All false positives convert below their campaign's mean. A confirmed negative is a candidate for human review, never proof the term is irrelevant.
+3. **Restated keyword truth is post hoc.** The restated wasted-target criterion was written after seeing seeds 1-5; its pass on seeds 6-10 validates a definition, not the rules.
+4. **Forecast.** Learned models are not shown to beat seasonal-naive (63% not worse, mean -6.7% on seeds 26-40). The shipped default is seasonal-naive; its accuracy is that of "same weekday last week" (account WAPE ~12%, synthetic data).
+5. **Anomaly detection** passes exactly at its limit (8/10) on one planted pattern (conversion-rate halving); CPC and spend anomalies were never planted, only false-positive behaviour was tested.
+6. **Unverified here:** analytics query timing, `EXPLAIN` index review, the Docker Compose stack, and (until a Postgres with pgvector is available) the 61 database-backed tests including RLS isolation.
+7. **Seeds already used** (1-15, 21-40) cannot be reused for new scored claims.

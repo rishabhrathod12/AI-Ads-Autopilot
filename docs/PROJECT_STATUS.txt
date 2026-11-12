@@ -19,4 +19,6 @@ M9 Amazon Ads API ...... not started
 Latest checks (2026-11-12): ruff, ruff format, mypy strict, import-linter pass; frontend lint/typecheck/48 tests pass;
 backend pytest: all unit tests pass, 61 Postgres tests skipped (no TEST_DATABASE_URL).
 
+M3 close-out: step 1 (cleanup, docs) done; step 3 (known limitations: docs/ML_EVALUATION.md section 7) done.
+Step 2 (Postgres tests) blocked on pgvector for PG 18 (built locally, v0.8.7, not yet installed: needs admin) and TEST_DATABASE_URL.
 Current work: M3 close-out. Next: run Postgres-backed tests, record limitations, independent eval signal.
