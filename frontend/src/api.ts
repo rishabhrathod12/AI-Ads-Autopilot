@@ -1,8 +1,21 @@
-import type { AssistantRun, Campaigns, Envelope, Health, Keywords, Summary, Trends } from "./types";
+import type {
+  AssistantRun,
+  Campaigns,
+  Envelope,
+  GenerateResult,
+  Health,
+  Keywords,
+  RecEnvelope,
+  RecStatus,
+  Recommendation,
+  Summary,
+  Trends,
+} from "./types";
 
 // Public, non-secret config only. Never put secrets in VITE_* variables.
 const BASE = import.meta.env.VITE_API_BASE_URL ?? "/api";
 export const DEV_ORG_HEADER = "X-Dev-Org-Id";
+export const DEV_ROLE_HEADER = "X-Dev-Role"; // development only; real roles come from the sign-in membership
 
 /** A failed API call, carrying the server's problem-details title for display. */
 export class ApiError extends Error {
@@ -21,9 +34,13 @@ export async function fetchHealth(signal?: AbortSignal): Promise<Health> {
   return (await res.json()) as Health;
 }
 
-async function get<T>(path: string, orgId: string, signal?: AbortSignal): Promise<Envelope<T>> {
+function devHeaders(orgId: string, role?: string): Record<string, string> {
+  return role ? { [DEV_ORG_HEADER]: orgId, [DEV_ROLE_HEADER]: role } : { [DEV_ORG_HEADER]: orgId };
+}
+
+async function get<T>(path: string, orgId: string, signal?: AbortSignal, role?: string): Promise<Envelope<T>> {
   // Development-only tenant header (ADR 0014): real authentication replaces this before deployment.
-  const res = await fetch(`${BASE}/api/v1${path}`, { signal, headers: { [DEV_ORG_HEADER]: orgId } });
+  const res = await fetch(`${BASE}/api/v1${path}`, { signal, headers: devHeaders(orgId, role) });
   if (!res.ok) {
     let title = `Request failed (${res.status})`;
     try {
@@ -54,11 +71,11 @@ async function problemTitle(res: Response): Promise<string> {
   }
 }
 
-async function post<T>(path: string, orgId: string, body: unknown, signal?: AbortSignal): Promise<T> {
+async function post<T>(path: string, orgId: string, body: unknown, signal?: AbortSignal, role?: string): Promise<T> {
   const res = await fetch(`${BASE}/api/v1${path}`, {
     method: "POST",
     signal,
-    headers: { [DEV_ORG_HEADER]: orgId, "Content-Type": "application/json" },
+    headers: { ...devHeaders(orgId, role), "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new ApiError(res.status, await problemTitle(res));
@@ -70,6 +87,24 @@ export const assistant = {
     post<{ thread_id: string }>("/assistant/threads", org, { title: "Conversation" }, signal),
   ask: (org: string, threadId: string, question: string, signal?: AbortSignal) =>
     post<AssistantRun>(`/assistant/threads/${threadId}/messages`, org, { question }, signal),
+};
+
+export const recommendations = {
+  list: (org: string, role: string, status: RecStatus | "all", signal?: AbortSignal) =>
+    get<Recommendation[]>(`/recommendations${status === "all" ? "" : `?status=${status}`}`, org, signal, role) as Promise<
+      RecEnvelope<Recommendation[]>
+    >,
+  generate: (org: string, role: string, signal?: AbortSignal) =>
+    post<{ data: GenerateResult }>("/recommendations/generate", org, {}, signal, role),
+  /** Approve or reject. The approval is bound to the exact content the person reviewed. */
+  decide: (org: string, role: string, id: string, verb: "approve" | "reject", contentHash: string, comment: string, signal?: AbortSignal) =>
+    post<{ data: Recommendation }>(
+      `/recommendations/${id}/${verb}`,
+      org,
+      { content_hash: contentHash, comment: comment.trim() === "" ? null : comment.trim() },
+      signal,
+      role,
+    ),
 };
 
 export const analytics = {

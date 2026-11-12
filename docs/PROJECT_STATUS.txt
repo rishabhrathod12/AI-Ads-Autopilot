@@ -32,4 +32,6 @@ Nothing is ever executed. Migration 0006 + SQL store + RLS/grants UNVERIFIED (no
 Observability/audit hygiene (M7 per the owner's numbering, ADR 0023) IMPLEMENTED 2026-11-12: value redaction, access log, safe error logs, audit for every write.
 M8 deployment (ADR 0024) written 2026-11-12: lockfile, hardened Dockerfiles/nginx, docker-compose.prod.yml, CI audit/images/coverage jobs, DEPLOYMENT/OPERATIONS docs.
 NOTHING in M8 has been built or run (no Docker). pip-audit and npm audit clean; coverage baseline 92% (without DB).
+Frontend Approval Center added 2026-11-12 (list, evidence, generate, approve/reject with confirmation, hash-bound; 60 frontend tests pass).
+Still missing in the UI: real sign-in (OIDC), audit view, expiry refresh. Role menu is development-only.
 Next: owner review; verify DB tests and images (push to CI or a Docker host); verify DB tests as soon as TEST_DATABASE_URL is usable.

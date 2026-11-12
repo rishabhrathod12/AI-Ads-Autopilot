@@ -76,4 +76,6 @@ Conventions in force:
 | `GET /executions` | admin | append-only history |
 | `GET /audit-logs` | admin | newest first; filters `action`, `entity_type`, `entity_id`; page backwards with `before` (`next_before` in the response) |
 
+**UI:** the Approval Center (`frontend/src/ApprovalCenter.tsx`) lists proposals with their evidence, filters by status, lets analysts generate and admins approve or reject after an explicit confirmation that states nothing is executed, sends the reviewed `content_hash`, and shows the server's reason on 409/403. Until real sign-in exists the role is a development-only menu (`X-Dev-Role`); there is no execute button.
+
 404 unknown recommendation (including another tenant's), 409 not pending / expired / hash mismatch / execution blocked, 422 malformed hash or unknown body fields.

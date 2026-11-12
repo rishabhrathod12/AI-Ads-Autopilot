@@ -53,6 +53,7 @@ Steps: (1) docs + ADR 0018 **done**; (2-3) graph skeleton, supervisor, three rea
 JWT verification (JWKS, asymmetric only), org selection via `X-Org-Id`, role from membership, role-based route guards, strict startup checks. Unverified: SQL membership lookup (needs a test database). Open: provider choice, provisioning, frontend login.
 
 ## M6 – Optimization and Approval (IMPLEMENTED, database layer UNVERIFIED; ADR 0022)
+Approval Center UI added 2026-11-12 (frontend, 12 tests; development-only role menu, no OIDC login yet).
 Deterministic bid/budget/negative-keyword proposals with guardrails, lifecycle, hash-bound approval, expiry, idempotency, audit, blocked execution gate, roles. **Not done:** DB verification (no test database), UI, Bid/Budget as graph specialists, Postgres checkpointer, expiry job.
 
 Original scope:

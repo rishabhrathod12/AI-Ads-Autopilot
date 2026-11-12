@@ -164,3 +164,48 @@ export interface AssistantRun {
   model: string;
   usage: { cost_usd: string };
 }
+
+// ---- Approval Center (docs/API_DESIGN.md, ADR 0022) ----------------------------------------------
+export type RecStatus = "pending" | "approved" | "rejected" | "expired";
+export type RecType = "bid_change" | "budget_change" | "negative_keyword";
+
+export interface Approval {
+  id: string;
+  decision: "approve" | "reject";
+  decided_by: string;
+  decided_at: string;
+  comment: string | null;
+  content_hash: string;
+}
+
+export interface Recommendation {
+  id: string;
+  type: RecType;
+  status: RecStatus;
+  entity: { type: string; id: string; label: string };
+  current_value_paise: number | null;
+  proposed_value_paise: number | null;
+  proposed_text: string | null;
+  rationale: string;
+  evidence: Record<string, unknown>;
+  confidence: string;
+  expected_impact: string;
+  data_source: string;
+  synthetic: boolean;
+  content_hash: string;
+  created_at: string;
+  expires_at: string;
+  approval?: Approval | null;
+}
+
+export interface RecEnvelope<T> {
+  data: T;
+  meta: { synthetic: boolean; notice: string | null };
+}
+
+export interface GenerateResult {
+  proposed: number;
+  created: number;
+  already_stored: number;
+  dropped_by_guardrails: number;
+}

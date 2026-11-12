@@ -152,6 +152,35 @@ tbody tr:last-child > * { border-bottom: 0; }
 .status { margin-top: 40px; padding-top: 12px; border-top: 1px solid var(--grid); color: var(--text-secondary); font-size: 0.8125rem; display: flex; flex-wrap: wrap; gap: 4px 20px; }
 .status p { margin: 0; }
 
+/* approval center */
+.approval { margin: 32px 0; }
+.approval-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; }
+.approval h2 { margin: 0 0 4px; }
+.role-picker { display: flex; align-items: center; gap: 8px; font-size: 0.8125rem; color: var(--text-secondary); }
+.role-picker select, .reco-confirm input { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--axis); background: var(--page); color: var(--text-primary); }
+.reco-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin: 12px 0; }
+.reco-toolbar [role="group"] { display: flex; flex-wrap: wrap; gap: 4px; }
+.reco-list { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 12px; }
+.reco-list.loading { opacity: 0.6; }
+.reco { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+.reco-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.reco-entity { color: var(--text-secondary); }
+.reco-change { font-size: 1.125rem; font-weight: 600; margin: 6px 0; }
+.reco-status { font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--border); }
+.reco-status-pending { color: var(--warn-text); }
+.reco-status-approved { color: var(--good-text); }
+.reco-status-rejected, .reco-status-expired { color: var(--text-secondary); }
+.reco-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0; }
+.reco-confirm { margin-top: 10px; padding: 10px 12px; border: 1px solid var(--accent); border-radius: 8px; }
+.reco-confirm label { display: grid; gap: 4px; margin: 8px 0; font-size: 0.875rem; }
+button.secondary { color: var(--text-secondary); }
+.evidence { margin-top: 6px; font-size: 0.8125rem; }
+.evidence summary { cursor: pointer; color: var(--text-secondary); }
+.evidence dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 16px; margin: 6px 0 0; }
+.evidence dl > div { display: contents; }
+.evidence dt { color: var(--text-secondary); text-transform: capitalize; }
+.evidence dd { margin: 0; overflow-wrap: anywhere; }
+
 @media (forced-colors: active) {
   .key { forced-color-adjust: none; }
   .grid, .crosshair { stroke: GrayText; }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchHealth } from "./api";
+import { ApprovalCenter } from "./ApprovalCenter";
 import { Assistant } from "./Assistant";
 import { Dashboard } from "./Dashboard";
 import type { Health } from "./types";
@@ -103,6 +104,7 @@ export default function App() {
               setOrgId(null);
             }}
           />
+          <ApprovalCenter orgId={orgId} />
           <Assistant orgId={orgId} />
         </>
       ) : (
