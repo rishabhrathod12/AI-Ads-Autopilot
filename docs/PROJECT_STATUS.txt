@@ -22,5 +22,7 @@ backend pytest: all unit tests pass, 61 Postgres tests skipped (no TEST_DATABASE
 M3 close-out: step 1 (cleanup, docs) done; step 3 (known limitations: docs/ML_EVALUATION.md section 7) done.
 Step 4 (independent evaluations) run: see docs/ML_EVALUATION.md 4d. Two known failures recorded; default forecast NOT changed
 seasonal_mean_4 vs seasonal-naive compared on fresh seeds (ML_EVALUATION.md 4e): rule failed on mock account level, default stays seasonal-naive.
-Step 2 (Postgres tests) blocked on pgvector for PG 18 (built locally, v0.8.7, not yet installed: needs admin) and TEST_DATABASE_URL.
-Current work: M3 close-out. Next: run Postgres-backed tests, record limitations, independent eval signal.
+Step 2 (Postgres tests) DEFERRED by owner (2026-11-12): pgvector v0.8.7 is installed in the local PG 18, but no test database
+URL was available, so the 61 DB-backed tests (RLS isolation, persistence, sync) remain UNVERIFIED here. Docker Desktop is not an option
+(virtualization disabled in firmware). M3 is NOT closed: its DB-backed checks, query timing and the Compose stack are unverified.
+Next: authentication + approval workflow plan (awaiting owner approval); verify DB tests as soon as TEST_DATABASE_URL is usable.
