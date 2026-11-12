@@ -1,7 +1,8 @@
 # Deployment
 
-**Status: UNVERIFIED.** Docker and a test database were not available where this was written. Every container, Compose and
-database step below is written carefully but has **not been run**. Each step is marked. Do not call a deployment
+**Status: partly verified.** Docker is not available here, so every container and Compose step below is written carefully but has
+**not been run**. The database side (migrations, SQL stores, RLS, startup role check, the approval flow over the real API) was
+verified on 2026-11-12 against PostgreSQL 18.6 with pgvector 0.8.7. Each step is marked. Do not call a deployment
 "production ready" until the checklist at the end is complete. Data is **MOCK**; no Amazon Ads API connection exists;
 `AD_EXECUTION_ENABLED` is `false` and the API refuses to start otherwise.
 
@@ -44,7 +45,7 @@ Row-level security isolates tenants, but a superuser or `BYPASSRLS` role ignores
 connects as the bootstrap superuser and relies on `SET LOCAL ROLE adpilot_app` per request: one forgotten `SET ROLE` would
 expose every tenant. The production stack therefore connects **as** `adpilot_app` (`DB_APP_ROLE` unset), and on startup the API
 checks the role its queries actually run as and **refuses to serve** if it is a superuser or has `BYPASSRLS`
-(`assert_rls_enforced`; unit-tested with a fake session, database test unverified).
+(`assert_rls_enforced`; unit-tested with a fake session and checked against PostgreSQL 18.6 on 2026-11-12).
 
 ## Environment variables (production)
 | Variable | Purpose |
@@ -78,12 +79,12 @@ approval history without exporting it.
 
 ## Production-readiness checklist (all open unless stated)
 - [ ] Both images build (`docker build`), and containers start healthy under Compose.
-- [ ] `alembic upgrade head` succeeds on an empty database, and the 76+ database-backed tests pass (`TEST_DATABASE_URL`).
-- [ ] Startup refuses to serve as a superuser role (database test `test_role_check.py`).
+- [x] `alembic upgrade head` succeeds on an empty database, and all 76 database-backed tests pass: verified 2026-11-12 on PostgreSQL 18.6 + pgvector 0.8.7 (840 passed, 0 skipped). **Not yet on PostgreSQL 16, the image the stack uses**; CI will run that.
+- [~] The role check passes for the application role against a real database (`test_role_check.py`, 2026-11-12). Refusal of a superuser connection is unit-tested; the database test accepts either outcome for a superuser owner, so it does not prove refusal.
 - [ ] An OIDC provider is chosen, users are provisioned, and the frontend has a login flow.
 - [ ] TLS termination and HSTS in front of the frontend.
 - [ ] Backup taken and a **restore rehearsed** (OPERATIONS.md).
 - [ ] Monitoring and alerting wired to the logs/health endpoints (OPERATIONS.md).
-- [ ] Load/performance check (analytics query timing on the 646k-row seed has never been run).
+- [~] Performance: analytics query timing measured once on PostgreSQL 18 (dashboard 0.03-0.04 s; keyword findings up to 1.2 s; see ML_EVALUATION.md section 6). No concurrent-load test.
 - [x] Dependency vulnerability scan clean (pip-audit on the lock, `npm audit --omit=dev`): run 2026-11-12, no findings.
 - [x] Execution cannot be enabled: `AD_EXECUTION_ENABLED=true` is refused at startup; no provider implementation exists.

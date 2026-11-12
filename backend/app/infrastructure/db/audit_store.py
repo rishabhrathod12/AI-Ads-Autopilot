@@ -1,7 +1,8 @@
 """SQL audit store: INSERT and SELECT only (the app role has no UPDATE or DELETE on audit_logs).
 
-UNVERIFIED against a real database in the environment where the filters were written; the base
-insert and tenant isolation are covered by tests/integration/test_rls.py.
+Verified 2026-11-12 against PostgreSQL 18.6 with pgvector 0.8.7 (a throwaway local cluster).
+Not yet run on PostgreSQL 16, the CI image.
+Covered by tests/integration/test_audit_store.py and test_rls.py.
 """
 
 from datetime import datetime

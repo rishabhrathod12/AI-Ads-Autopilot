@@ -24,7 +24,7 @@ Per-user/tenant API limits; LLM cost caps; outbound Amazon calls via token bucke
 Agents have no write tools. Retrieved text and tool output treated as data. Structured outputs validated. Validator checks numbers against tool results. No secrets or unnecessary PII sent to the model.
 
 ## 8. Audit logging
-**Implemented (ADR 0023):** every state-changing route writes an audit entry with actor, organization, request id and before/after, in the same transaction; content is scrubbed of credentials and emails first; access logs omit query strings, headers and bodies; log values are redacted, not just secret-named fields. SQL audit queries are unverified until the database tests run. Target design below.
+**Implemented (ADR 0023):** every state-changing route writes an audit entry with actor, organization, request id and before/after, in the same transaction; content is scrubbed of credentials and emails first; access logs omit query strings, headers and bodies; log values are redacted, not just secret-named fields. SQL audit queries verified on PostgreSQL 18.6 (2026-11-12). Target design below.
 
 Append-only; records recommendations, approvals, rejections, execution attempts with actor, before/after, request ID.
 
@@ -32,7 +32,7 @@ Append-only; records recommendations, approvals, rejections, execution attempts 
 Production refuses to start without JWT auth, serves no API docs, and refuses to serve as a database role that can bypass RLS; the backend runs as the limited `adpilot_app` login role, non-root, read-only filesystem, no capabilities; nginx sends CSP and other security headers; dependencies are hash-pinned and scanned (no known vulnerabilities on 2026-11-12). Open: TLS/HSTS in front, secret manager and rotation, log shipping and alerting, digest-pinned base images.
 
 ## 9. Execution safeguards
-**Implemented (ADR 0022, database layer unverified):** approval is bound to the content hash and expires; only admin/owner decide; every decision, expiry and blocked execution is audited in the same transaction; the execute endpoint always answers 409 and no code calls a provider. The list below is the target for M9.
+**Implemented (ADR 0022, database layer verified on PostgreSQL 18.6 on 2026-11-12):** approval is bound to the content hash and expires; only admin/owner decide; every decision, expiry and blocked execution is audited in the same transaction; the execute endpoint always answers 409 and no code calls a provider. The list below is the target for M9.
 
 - Startup fails if `AD_EXECUTION_ENABLED=true` and any of: non-mock provider, approval service, authorization checks, audit sink is missing.
 - Execution requires: approved record by authorized human, unexpired recommendation, unchanged `content_hash`, successful audit write before the call.

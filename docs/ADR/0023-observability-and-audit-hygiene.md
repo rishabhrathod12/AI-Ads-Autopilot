@@ -1,6 +1,6 @@
 # ADR 0023: Log and audit hygiene
 
-Status: Accepted (implemented 2026-11-12, pending owner review; SQL audit queries UNVERIFIED against a database)
+Status: Accepted (implemented 2026-11-12, pending owner review; SQL audit queries verified on PostgreSQL 18.6)
 
 ## Context
 The platform handles seller data, JWTs, API keys and (later) OAuth tokens. Logs and audit rows are retained and read by
@@ -30,7 +30,7 @@ questions) are exactly where credentials end up by accident.
 ## Consequences
 - Redaction is pattern-based: a novel credential format, a person's name or an address is not caught. It reduces, not
   eliminates, accidental disclosure; secrets should still never be put in free text.
-- Unverified: `SqlAuditStore` filters and paging (`tests/integration/test_audit_store.py`, skipped without a database).
+- Verified 2026-11-12 on PostgreSQL 18.6: `SqlAuditStore` filters, paging, isolation and immutability (`tests/integration/test_audit_store.py` and the 33-check end-to-end run). Not yet run on PostgreSQL 16.
 - Not done (M8): metrics, tracing export, log shipping, alerting, retention and backup of the audit table, and the
   failed-authentication log/rate limit. Reads (GETs) are not audited.
 - The access log records the role claimed through the membership lookup, not the JWT subject, to keep personal

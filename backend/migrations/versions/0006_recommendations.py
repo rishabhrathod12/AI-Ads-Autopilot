@@ -3,8 +3,9 @@
 Revision ID: 0006
 Revises: 0005
 
-UNVERIFIED against a real database in the environment where this was written (no test database was
-available). Run `alembic upgrade head` and the integration tests before relying on it.
+Verified 2026-11-12 against PostgreSQL 18.6 with pgvector 0.8.7 (a throwaway local cluster).
+Not yet run on PostgreSQL 16, the CI image. Upgrade, downgrade
+and the match against the ORM models are covered by the integration tests.
 """
 
 import sqlalchemy as sa

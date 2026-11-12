@@ -35,7 +35,7 @@ See [ANALYTICS.md](ANALYTICS.md) and [ML_EVALUATION.md](ML_EVALUATION.md). **Exi
 - Pre-registered held-out checks that **failed** (recorded as strict known failures, not adjusted): keyword waste
   precision (0.67 vs 0.85), negative-term recall (0.64 vs 0.70), account forecast "no worse than seasonal-naive" (6/10 vs 7/10).
   Anomaly detection passed, exactly at its detection limit (8/10).
-- **Not verified:** analytics query timing (< 1 s on the 646k-row seed) and the `EXPLAIN` index review; the Docker Compose stack.
+- **Verified 2026-11-12:** analytics query timing on the 646k-row seed (dashboard 0.03-0.04 s; keyword findings 0.9-1.2 s; ML_EVALUATION.md section 6). **Not verified:** the `EXPLAIN` index review; the Docker Compose stack.
 - **Verified in CI:** backend (full suite incl. Postgres RLS tests; 306 tests pass locally), frontend and gitleaks jobs on `2d1a1bd`. The first run on `2048180` failed only in the gitleaks job (cause unconfirmed; a local gitleaks scan of all history found no leaks).
 - **Re-scored on fresh seeds 6-10 with restated truth** (ML_EVALUATION.md 2b): wasted precision and negative recall now pass; negative precision fails (0.77 vs 0.85, recorded as known); negative precision diagnosed as weak converters, not irrelevant terms (not changed). **Forecast re-score on 30 fresh account cases also failed** (63% not worse, mean -6.7% vs seasonal-naive; ML_EVALUATION.md 4b), so the learned forecast is not shown to beat the baseline.
 - **Owner decision (2026-11-12):** the default forecast is seasonal-naive; learned models are experimental and opt-in (ADR 0013 update, ML_EVALUATION.md 4c). Negative precision stays a recorded known failure.
@@ -66,7 +66,7 @@ Value-level log redaction, access log, safe exception logging, audit for every s
 Unit/integration/agent/ML evals, security and performance tests. **Exit:** coverage and eval targets met.
 
 ## M8 – Deployment (IMPLEMENTED as files and docs, UNVERIFIED; ADR 0024)
-Hash-pinned lock, hardened images, production Compose with migrate/roles jobs, runtime safety checks, CI image/audit/coverage jobs, DEPLOYMENT.md and OPERATIONS.md. **Not verified:** any image build, Compose bring-up, migration, restore. **Not done:** OIDC provider and frontend login, TLS, monitoring and log shipping, backup rehearsal, performance measurement.
+Hash-pinned lock, hardened images, production Compose with migrate/roles jobs, runtime safety checks, CI image/audit/coverage jobs, DEPLOYMENT.md and OPERATIONS.md. **Verified 2026-11-12:** migrations 0001-0006 up/down on PostgreSQL 18, the startup role check. **Not verified:** any image build, Compose bring-up, restore. **Not done:** OIDC provider and frontend login, TLS, monitoring and log shipping, backup rehearsal, performance measurement.
 
 Original scope:
 Cloud deploy, hosted DB, env config, monitoring, docs.

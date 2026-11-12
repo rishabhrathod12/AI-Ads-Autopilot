@@ -35,3 +35,13 @@ NOTHING in M8 has been built or run (no Docker). pip-audit and npm audit clean; 
 Frontend Approval Center added 2026-11-12 (list, evidence, generate, approve/reject with confirmation, hash-bound; 60 frontend tests pass).
 Still missing in the UI: real sign-in (OIDC), audit view, expiry refresh. Role menu is development-only.
 Next: owner review; verify DB tests and images (push to CI or a Docker host); verify DB tests as soon as TEST_DATABASE_URL is usable.
+
+VERIFICATION UPDATE 2026-11-12 (supersedes every "unverified: no database" line above):
+A throwaway local PostgreSQL 18.6 cluster with pgvector 0.8.7 (built from the official v0.8.7 source) was started on a private port.
+ - Full backend suite with TEST_DATABASE_URL: 840 passed, 0 skipped (was 764 passed, 76 skipped): migrations 0001-0006 up/down and
+   matching the ORM, RLS isolation, SQL stores, membership lookup, audit store, startup role check.
+ - End-to-end run of the real API on the 646,436-row mock seed: 33/33 checks (roles, hash-bound approval, idempotent replay,
+   expiry and blocked execution committed through a returned 409, cross-tenant isolation, app role cannot tamper).
+ - Query timing: dashboard 0.03-0.04 s; keyword findings 0.9-1.2 s (ML_EVALUATION.md section 6).
+ STILL NOT VERIFIED: PostgreSQL 16 (the image CI and Compose use), Docker image builds, Compose bring-up, nginx config, restore
+ rehearsal, load under concurrency. M3 accuracy gates remain failed/known limitations (this verification does not change them).

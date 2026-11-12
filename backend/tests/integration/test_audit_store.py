@@ -1,7 +1,8 @@
 """SQL audit store against a real PostgreSQL: filters, paging, tenant isolation, immutability.
 
-UNVERIFIED in the environment where this was written (no test database was available): skipped
-there. Run with TEST_DATABASE_URL set before relying on the audit query filters.
+Verified 2026-11-12 against PostgreSQL 18.6 with pgvector 0.8.7 (a throwaway local cluster).
+Not yet run on PostgreSQL 16, the CI image.
+Skipped unless TEST_DATABASE_URL is set.
 """
 
 import uuid

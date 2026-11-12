@@ -220,11 +220,23 @@ recorded as a strict known failure. Re-testing needs another fresh-seed set and 
 | ~5 backtest folds | 7 folds on 117 mature days (4 on 100) | Folds are determined by history length (60 training days, weekly steps) |
 | `forecast_runs` migration `0003` | Done, plus `clock_timestamp()` ordering | `now()` ties within a transaction; "latest" was arbitrary (found by a flaky test) |
 
-## 6. Not yet verified
+## 6. Verified later, and still not verified
 
-- Query timing for the analytics reader (dashboard under 1 s on the 646k-row seed) and the `EXPLAIN` index review.
-- The Docker Compose stack (Docker is not installed on the development machine).
-- Everything on real data.
+**Measured 2026-11-12** on PostgreSQL 18.6 with the full 646,436-row mock seed (seeded in 71 s), API on the same machine,
+warm, 3 runs each, development mode (superuser connection with `SET ROLE`), no concurrency:
+
+| Endpoint | Time per request |
+|---|---|
+| dashboard summary, trends, campaigns, campaign changes | 0.03 - 0.04 s |
+| anomalies | 0.06 - 0.08 s |
+| keywords (top 15) | 0.23 - 0.66 s |
+| search terms (top 15) | 0.64 - 0.81 s |
+| keyword findings | 0.89 - 1.18 s (one run above 1 s) |
+
+The plan's target (dashboard under 1 s) is met with a wide margin. Keyword findings are the slowest route and sometimes exceed
+1 s; no `EXPLAIN` index review was done, and nothing was measured under concurrent load or on a smaller machine.
+
+**Still not verified:** the Docker Compose stack and image builds (no Docker here); everything on real data.
 
 ## 7. Known limitations (M3 close-out, 2026-11-12)
 

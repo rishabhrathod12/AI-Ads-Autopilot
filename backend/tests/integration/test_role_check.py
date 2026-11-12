@@ -1,7 +1,8 @@
 """The production RLS-role check against a real PostgreSQL.
 
-UNVERIFIED in the environment where this was written (no test database was available): skipped
-there. Run with TEST_DATABASE_URL set.
+Verified 2026-11-12 against PostgreSQL 18.6 with pgvector 0.8.7 (a throwaway local cluster).
+Not yet run on PostgreSQL 16, the CI image.
+Skipped unless TEST_DATABASE_URL is set.
 """
 
 import pytest

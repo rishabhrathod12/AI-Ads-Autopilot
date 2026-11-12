@@ -1,6 +1,6 @@
 # ADR 0022: Approval workflow, hash-bound approval, deterministic recommendation calculators
 
-Status: Accepted (implemented 2026-11-12, pending owner review; database layer UNVERIFIED, see Consequences)
+Status: Accepted (implemented 2026-11-12, pending owner review; database layer verified on PostgreSQL 18.6 only, see Consequences)
 
 ## Context
 M6 turns analytics into proposals a human can act on, without any path that changes an advertising account.
@@ -38,9 +38,7 @@ safeguards, idempotency, complete audit history. ADR 0018 deferred the Bid and B
   UPDATE only `recommendations.status`; RLS (forced) isolates every table by organization.
 
 ## Consequences
-- **Unverified:** migration `0006`, `SqlRecommendationStore`, the grants and the RLS behavior have not been run against a
-  database (none was available). The migration was rendered to PostgreSQL DDL and inspected; contract tests exist in
-  `tests/integration/test_recommendation_store.py` and are skipped without `TEST_DATABASE_URL`. Do not rely on them yet.
+- **Verified 2026-11-12** on PostgreSQL 18.6 with pgvector 0.8.7 (a throwaway local cluster), not yet on PostgreSQL 16 (the CI image): migration `0006` up and down; the 7 store contract tests; and a 33-check end-to-end run against the real API (roles, hash binding, idempotent replay, expiry and blocked execution still committed when the response is a 409, cross-tenant isolation through the API, and the app role refused when changing approvals, audit rows or proposal content).
 - No automatic expiry job: an unreviewed recommendation only becomes `expired` when someone tries to decide it (reads show
   `pending` with a past `expires_at`; the UI must treat those as expired).
 - No self-approval restriction, no two-person rule, no approval comment requirement; approver identity is the JWT subject.

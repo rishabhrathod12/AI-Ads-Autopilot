@@ -1,7 +1,8 @@
 """Membership lookup against a real PostgreSQL: roles resolve per organization, never across.
 
-UNVERIFIED in the development environment where this was written (no test database was available):
-it is skipped there and must be run with TEST_DATABASE_URL set before relying on it.
+Verified 2026-11-12 against PostgreSQL 18.6 with pgvector 0.8.7 (a throwaway local cluster).
+Not yet run on PostgreSQL 16, the CI image.
+Skipped unless TEST_DATABASE_URL is set.
 """
 
 import uuid

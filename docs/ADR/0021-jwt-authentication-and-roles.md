@@ -30,6 +30,6 @@ approval workflow needs a verified person with a role. Hand-rolled password hand
   flow**; provisioning is a later task.
 - `users` has no RLS (ADR 0003): any database session as the app role can read every user's email. Tracked as a finding.
 - Database-level behavior (membership lookup under RLS) is covered by `tests/integration/test_membership.py`, which could not
-  be run in the development environment: **unverified** until `TEST_DATABASE_URL` is available.
+  be run in the development environment at first; **verified 2026-11-12 on PostgreSQL 18.6** (not yet on PostgreSQL 16, the CI image).
 - The frontend still sends the development header; it needs an OIDC login flow before it can talk to an authenticated API.
 - No rate limiting on failed authentication yet; no token revocation beyond expiry; JWKS fetch failure fails closed (401).

@@ -1,6 +1,6 @@
 # ADR 0024: Deployment hardening (M8)
 
-Status: Accepted (implemented 2026-11-12, pending owner review; container and database behavior UNVERIFIED)
+Status: Accepted (implemented 2026-11-12, pending owner review; database behavior verified on PostgreSQL 18.6, container behavior UNVERIFIED)
 
 ## Context
 M8 asks for a reproducible, secure deployment procedure. Docker and a test database were not available when this was written,

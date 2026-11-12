@@ -1,7 +1,8 @@
 """SQL RecommendationStore bound to one tenant-scoped session (one transaction).
 
-UNVERIFIED against a real database in the environment where this was written; the contract tests in
-``tests/integration/test_recommendation_store.py`` must be run with TEST_DATABASE_URL set.
+Verified 2026-11-12 against PostgreSQL 18.6 with pgvector 0.8.7 (a throwaway local cluster).
+Not yet run on PostgreSQL 16, the CI image.
+Contract tests: ``tests/integration/test_recommendation_store.py``.
 """
 
 from collections.abc import Sequence
