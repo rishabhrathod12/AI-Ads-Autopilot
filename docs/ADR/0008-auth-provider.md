@@ -6,7 +6,7 @@ Status: Accepted (owner approved M0, 2026-11-02)
 Hand-rolled auth is high risk.
 
 ## Decision
-Proposed: managed provider (Supabase Auth or Auth0) issuing JWTs verified by FastAPI. Final choice awaits owner decision.
+Managed provider issuing JWTs verified by FastAPI. The verification design is in ADR 0021 and is provider-independent; the specific provider (Supabase Auth, Auth0, Keycloak or other OIDC) is **still an open owner decision**, required before deployment.
 
 ## Consequences
 Less security surface; vendor dependency.

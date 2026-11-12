@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import PlainTextResponse
 
 from app.api.serialize import envelope, to_jsonable
-from app.api.tenancy import Scope, get_scope
+from app.api.tenancy import ANALYST_REQUIRED, Scope, get_scope
 from app.application.analytics.anomalies import detect_anomalies
 from app.application.analytics.campaigns import campaign_changes, campaign_overview
 from app.application.analytics.dashboard import NoDataError, dashboard_summary
@@ -27,6 +27,7 @@ from app.application.reporting.report import (
     campaigns_csv,
     report_markdown,
 )
+from app.domain.auth import Principal
 from app.domain.kpi.metrics import Kpis, acos_pct
 from app.domain.kpi.periods import DateRange
 
@@ -164,7 +165,10 @@ async def get_anomalies(scope: Scope = Depends(get_scope)) -> dict[str, Any]:
 
 
 @router.post("/forecasts/account", status_code=201)
-async def create_account_forecast(scope: Scope = Depends(get_scope)) -> dict[str, Any]:
+async def create_account_forecast(
+    _principal: Principal = ANALYST_REQUIRED,  # first: authorize before a tenant session opens
+    scope: Scope = Depends(get_scope),
+) -> dict[str, Any]:
     """Backtest, select and store a 14-day spend and sales forecast (takes several seconds)."""
     result = await forecast_account(scope.reader)
     ids = await save_account_forecast(scope.forecasts, result)

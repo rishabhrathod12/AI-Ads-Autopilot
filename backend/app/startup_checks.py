@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 
 from app.config import Settings
+from app.infrastructure.auth.jwt_verifier import ASYMMETRIC_ALGORITHMS
 
 
 class UnsafeConfigurationError(RuntimeError):
@@ -19,15 +20,37 @@ class ExecutionPrerequisites:
 
 
 def validate_auth_readiness(settings: Settings) -> None:
-    """Real authentication does not exist yet, so production must not start (ADR 0008).
+    """Authentication must be fully configured, or absent outside production (ADR 0008, 0021).
 
-    Until it does, tenants are identified by a development-only header; serving real traffic that
-    way would let any caller read any seller's data.
+    Without it, tenants are identified by a development-only header; serving real traffic that way
+    would let any caller read any seller's data. A *partial* configuration is refused everywhere:
+    it would silently fall back to that header.
     """
+    set_fields = {
+        "AUTH_JWT_ISSUER": bool(settings.auth_jwt_issuer),
+        "AUTH_JWT_AUDIENCE": bool(settings.auth_jwt_audience),
+        "AUTH_JWKS_URL": bool(settings.auth_jwks_url),
+    }
+    if any(set_fields.values()) and not all(set_fields.values()):
+        missing = ", ".join(k for k, v in set_fields.items() if not v)
+        raise UnsafeConfigurationError(
+            f"authentication is partly configured (missing: {missing}); set all three or none"
+        )
+    if settings.auth_configured:
+        url = settings.auth_jwks_url
+        local = url.startswith(("http://localhost", "http://127.0.0.1"))
+        if not url.startswith("https://") and not (local and settings.app_env != "production"):
+            raise UnsafeConfigurationError("AUTH_JWKS_URL must be https")
+        bad = set(settings.auth_jwt_algorithms) - ASYMMETRIC_ALGORITHMS
+        if bad or not settings.auth_jwt_algorithms:
+            raise UnsafeConfigurationError(
+                f"AUTH_JWT_ALGORITHMS must be asymmetric algorithms only, got {sorted(bad)}"
+            )
+        return
     if settings.app_env == "production":
         raise UnsafeConfigurationError(
-            "APP_ENV=production refused: real authentication is not implemented yet. "
-            "It is required before any non-local deployment."
+            "APP_ENV=production refused: real authentication is not configured "
+            "(set AUTH_JWT_ISSUER, AUTH_JWT_AUDIENCE and AUTH_JWKS_URL)."
         )
 
 

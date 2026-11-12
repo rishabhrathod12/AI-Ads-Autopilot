@@ -49,6 +49,9 @@ LangGraph graph, typed state, specialists, Validator, checkpointing. **Exit:** r
 
 Steps: (1) docs + ADR 0018 **done**; (2-3) graph skeleton, supervisor, three read-only specialists, validator reuse, budgets **done** (`backend/app/application/agents/`, 14 scripted-model tests, no live run yet); (4) reporting **done** (deterministic report + CSV/Markdown/JSON endpoint, plus a `ppc_reporting` specialist; PDF not built; ADR 0020); (5) persisted routing trace **done** (a `route` step in every stored run lists the specialists chosen or marks a fallback); the Postgres LangGraph checkpointer is **deferred to M6**: it cannot be verified here (no Postgres in this environment), read-only runs finish in seconds and are stored immutably so there is nothing to resume, and its real use is the M6 approval interrupt. Run counters and evidence still live on `GraphRun`, not in checkpointed state, and must move when the checkpointer is added; (6) chat API switch (`ASSISTANT_ENGINE`, default single) **done**; (7) pre-registered evaluation **run, partly failed** (held-out and cost criteria pass, routing criterion fails on one unverified answer; see ASSISTANT.md). The R3 failure was later traced to the validator counting numbers echoed from the question (ADR 0019); the fix was re-checked on 3 questions only, not re-scored. **Remaining for M5 exit:** owner review.
 
+## Authentication (between M5 and M6; ADR 0021) – IMPLEMENTED, pending owner review
+JWT verification (JWKS, asymmetric only), org selection via `X-Org-Id`, role from membership, role-based route guards, strict startup checks. Unverified: SQL membership lookup (needs a test database). Open: provider choice, provisioning, frontend login.
+
 ## M6 – Optimization and Approval
 Bid/budget/negative-keyword recommendations, approval workflow, audit logs, gated execution (disabled). **Exit:** guardrail violations = 0; approval flow end-to-end on mock.
 

@@ -15,6 +15,7 @@ from app.api.errors import problem, register_error_handlers
 from app.api.routers.analytics import router as analytics_router
 from app.api.routers.assistant import router as assistant_router
 from app.config import Settings
+from app.infrastructure.auth.jwt_verifier import JwtVerifier, jwks_key_resolver
 from app.infrastructure.db.session import create_engine
 from app.logging import configure_logging
 from app.startup_checks import (
@@ -61,11 +62,23 @@ def create_app(
 
     app = FastAPI(title="AdPilot AI", version="0.1.0", lifespan=lifespan)
     app.state.settings = settings
+    # With auth configured, bearer JWTs are required and the dev header is ignored (api/tenancy.py).
+    app.state.token_verifier = (
+        JwtVerifier(
+            issuer=settings.auth_jwt_issuer,
+            audience=settings.auth_jwt_audience,
+            key_resolver=jwks_key_resolver(settings.auth_jwks_url),
+            algorithms=settings.auth_jwt_algorithms,
+        )
+        if settings.auth_configured
+        else None
+    )
+    app.state.membership_directory = None  # defaults to the SQL directory; tests inject one
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_methods=["GET", "POST"],
-        allow_headers=["Authorization", "Content-Type", "X-Request-ID", "X-Dev-Org-Id"],
+        allow_headers=["Authorization", "Content-Type", "X-Request-ID", "X-Org-Id", "X-Dev-Org-Id"],
     )
 
     @app.middleware("http")

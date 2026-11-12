@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.ratelimit import RateLimiter
-from app.api.tenancy import resolve_tenant
+from app.api.tenancy import ANALYST_REQUIRED, tenant_of
 from app.application.assistant.service import (
     MAX_QUESTION_CHARS,
     AssistantService,
@@ -24,7 +24,7 @@ from app.application.assistant.tools import ToolContext
 from app.application.ports.assistant_store import AssistantStore, StoredMessage, StoredRun
 from app.application.ports.llm import LLMError, LLMNotConfiguredError
 from app.config import Settings
-from app.domain.tenant import TenantContext
+from app.domain.auth import Principal
 from app.infrastructure.db.assistant_store import SqlAssistantStore, SqlSpendLedger
 from app.infrastructure.db.forecast_store import SqlForecastStore
 from app.infrastructure.db.knowledge_store import SqlKnowledgeStore
@@ -55,8 +55,9 @@ class NewMessage(BaseModel):
 
 
 async def get_assistant(
-    request: Request, tenant: TenantContext = Depends(resolve_tenant)
+    request: Request, principal: Principal = ANALYST_REQUIRED
 ) -> AsyncIterator[AssistantDeps]:
+    tenant = tenant_of(principal)
     engine = request.app.state.engine
     if engine is None:
         raise HTTPException(503, "Database not configured.")

@@ -17,6 +17,7 @@ dependencies = [
   "scikit-learn>=1.5",
   "statsmodels>=0.14",
   "langgraph>=1.0",
+  "PyJWT[crypto]>=2.8",
 ]
 
 [project.optional-dependencies]

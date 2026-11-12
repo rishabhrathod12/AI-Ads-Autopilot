@@ -36,7 +36,7 @@ Events: `plan`, `tool_call`, `tool_result`, `token`, `final` (with evidence refs
 
 ## Implemented (M3): analytics endpoints
 
-Read-only unless noted. Base path `/api/v1`. **Development tenancy:** send `X-Dev-Org-Id: <organization uuid>`
+Read-only unless noted. Base path `/api/v1`. **Authentication (ADR 0021):** with `AUTH_JWT_*` configured send `Authorization: Bearer <jwt>` and `X-Org-Id: <organization uuid>` (401 invalid/missing token, 403 not a member or role too low, 400 bad `X-Org-Id`). **Development tenancy (only when auth is not configured):** send `X-Dev-Org-Id: <organization uuid>`
 ([ADR 0014](ADR/0014-dev-tenant-header-and-production-refusal.md)); production refuses to start until real
 authentication exists. Optional `from` / `to` (inclusive dates; default: last 28 days, max 366).
 

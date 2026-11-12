@@ -13,11 +13,12 @@ from fastapi.testclient import TestClient
 
 from app.api.main import create_app
 from app.api.serialize import envelope, to_jsonable
-from app.api.tenancy import DEV_ORG_HEADER, Scope, get_scope, resolve_tenant
+from app.api.tenancy import DEV_ORG_HEADER, Scope, current_principal, get_scope, resolve_tenant
 from app.application.ports.forecast_store import Metric, NewForecastRun, ScopeType, StoredForecast
 from app.application.ports.performance_reader import Freshness, Provenance
 from app.config import Settings
 from app.domain.ads.models import DataSource
+from app.domain.auth import Principal, Role
 from app.infrastructure.providers.mock.generator import GeneratedData, MockConfig, generate
 from app.startup_checks import UnsafeConfigurationError
 from tests.unit.fake_reader import FakeReader
@@ -65,7 +66,11 @@ def client(data: GeneratedData) -> Iterator[TestClient]:
     async def scope() -> AsyncIterator[Scope]:
         yield Scope(ORG, reader, store)
 
+    async def analyst() -> Principal:  # authentication is tested in test_auth.py
+        return Principal("test-user", ORG, Role.ANALYST)
+
     app.dependency_overrides[get_scope] = scope
+    app.dependency_overrides[current_principal] = analyst
     with TestClient(app) as c:
         yield c
 

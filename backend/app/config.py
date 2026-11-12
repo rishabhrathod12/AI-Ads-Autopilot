@@ -37,7 +37,17 @@ class Settings(BaseSettings):
     embedding_provider: Literal["none", "hashing", "openai"] = "none"
     embedding_model: str = ""
     embedding_usd_per_million: Decimal | None = None
+    # --- Authentication. All three must be set together (a subset is refused at startup). When set,
+    # bearer JWTs are required and the development tenant header is ignored. Empty means unset.
+    auth_jwt_issuer: str = ""
+    auth_jwt_audience: str = ""
+    auth_jwks_url: str = ""
+    auth_jwt_algorithms: list[str] = ["RS256", "ES256"]
     mock_seed: int = 42
     mock_history_days: int = 120
     log_level: str = "INFO"
     cors_origins: list[str] = ["http://localhost:5173"]
+
+    @property
+    def auth_configured(self) -> bool:
+        return bool(self.auth_jwt_issuer and self.auth_jwt_audience and self.auth_jwks_url)

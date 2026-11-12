@@ -10,7 +10,7 @@ Environment / secret manager via Pydantic `SecretStr`. `.env` gitignored; `.env.
 Authorization code flow with `state` and PKCE. Refresh tokens encrypted at application level (AES-GCM, key versioning, key outside the DB). Access tokens short-lived, memory only. Never logged. User-revocable.
 
 ## 4. Authentication and authorization
-Managed auth provider **[Proposed: Supabase Auth or Auth0]**; JWT verified by FastAPI. RBAC (viewer, analyst, admin, owner), deny by default.
+Managed OIDC provider issues JWTs; FastAPI verifies them (asymmetric algorithms only, issuer/audience/expiry/subject required; ADR 0021). The caller selects an organization with `X-Org-Id`; the role comes from the membership row, never from the token or a header. RBAC (viewer, analyst, admin, owner), deny by default. Implemented and unit-tested; the SQL membership lookup is **unverified** until the database tests run. Open: provider choice, user provisioning, failed-login rate limiting, revocation, and `users` is not RLS-protected.
 
 ## 5. Tenant isolation
 JWT-derived tenant; repository `TenantContext`; Postgres RLS; CI cross-tenant negative tests.

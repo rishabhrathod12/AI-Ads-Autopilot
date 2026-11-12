@@ -81,7 +81,7 @@ cd backend && .venv/Scripts/uvicorn app.api.asgi:app --port 8010       # use a p
 python -m app.cli seed-mock                                          # ~3 min, needs DATABASE_URL + alembic upgrade head
 curl -H "X-Dev-Org-Id: <org uuid printed by seed-mock>" http://127.0.0.1:8010/api/v1/dashboard/summary
 ```
-The tenant header is **development only**; production refuses to start until real authentication exists.
+The tenant header is **development only** and is ignored when JWT authentication is configured (`AUTH_JWT_ISSUER`, `AUTH_JWT_AUDIENCE`, `AUTH_JWKS_URL`; see ADR 0021). Production refuses to start without it.
 Slow accuracy evaluations are excluded from the default test run: `pytest -m eval tests/evals -s`.
 
 ## Workflow

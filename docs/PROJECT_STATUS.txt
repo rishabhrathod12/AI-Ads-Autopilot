@@ -25,4 +25,6 @@ seasonal_mean_4 vs seasonal-naive compared on fresh seeds (ML_EVALUATION.md 4e):
 Step 2 (Postgres tests) DEFERRED by owner (2026-11-12): pgvector v0.8.7 is installed in the local PG 18, but no test database
 URL was available, so the 61 DB-backed tests (RLS isolation, persistence, sync) remain UNVERIFIED here. Docker Desktop is not an option
 (virtualization disabled in firmware). M3 is NOT closed: its DB-backed checks, query timing and the Compose stack are unverified.
-Next: authentication + approval workflow plan (awaiting owner approval); verify DB tests as soon as TEST_DATABASE_URL is usable.
+Authentication (Step A, ADR 0021) IMPLEMENTED 2026-11-12: provider-independent JWT verification, org selection, roles; 41 unit tests pass.
+Not done: identity provider choice, user provisioning, frontend login, SQL membership test run (unverified: no test DB).
+Next: Step B (approval workflow, M6) awaiting owner review of Step A; verify DB tests as soon as TEST_DATABASE_URL is usable.

@@ -16,7 +16,13 @@ PROBLEM_JSON = "application/problem+json"
 log = structlog.get_logger()
 
 
-def problem(request: Request, status: int, title: str, detail: str | None = None) -> JSONResponse:
+def problem(
+    request: Request,
+    status: int,
+    title: str,
+    detail: str | None = None,
+    headers: dict[str, str] | None = None,
+) -> JSONResponse:
     body: dict[str, Any] = {
         "type": "about:blank",
         "title": title,
@@ -25,13 +31,13 @@ def problem(request: Request, status: int, title: str, detail: str | None = None
     }
     if detail is not None:
         body["detail"] = detail
-    return JSONResponse(body, status_code=status, media_type=PROBLEM_JSON)
+    return JSONResponse(body, status_code=status, media_type=PROBLEM_JSON, headers=headers)
 
 
 def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(StarletteHTTPException)
     async def _http(request: Request, exc: StarletteHTTPException) -> JSONResponse:
-        return problem(request, exc.status_code, str(exc.detail))
+        return problem(request, exc.status_code, str(exc.detail), headers=dict(exc.headers or {}))
 
     @app.exception_handler(RequestValidationError)
     async def _validation(request: Request, exc: RequestValidationError) -> JSONResponse:
