@@ -64,7 +64,10 @@ Value-level log redaction, access log, safe exception logging, audit for every s
 ## M7 – Evaluation and Testing
 Unit/integration/agent/ML evals, security and performance tests. **Exit:** coverage and eval targets met.
 
-## M8 – Deployment
+## M8 – Deployment (IMPLEMENTED as files and docs, UNVERIFIED; ADR 0024)
+Hash-pinned lock, hardened images, production Compose with migrate/roles jobs, runtime safety checks, CI image/audit/coverage jobs, DEPLOYMENT.md and OPERATIONS.md. **Not verified:** any image build, Compose bring-up, migration, restore. **Not done:** OIDC provider and frontend login, TLS, monitoring and log shipping, backup rehearsal, performance measurement.
+
+Original scope:
 Cloud deploy, hosted DB, env config, monitoring, docs.
 
 ## M9 – Amazon Ads API

@@ -22,6 +22,7 @@ from app.infrastructure.db.session import create_engine
 from app.logging import configure_logging
 from app.startup_checks import (
     ExecutionPrerequisites,
+    assert_rls_enforced,
     validate_auth_readiness,
     validate_embedding_config,
     validate_execution_safety,
@@ -69,6 +70,8 @@ def create_app(
         engine = None
         if settings.database_url is not None:
             engine = create_engine(settings.database_url.get_secret_value())
+            if settings.app_env == "production":  # fail before serving, not on the first request
+                await assert_rls_enforced(engine, settings.db_app_role)
         app.state.engine = engine
         log.info(
             "startup",
@@ -80,7 +83,16 @@ def create_app(
         if engine is not None:
             await engine.dispose()
 
-    app = FastAPI(title="AdPilot AI", version="0.1.0", lifespan=lifespan)
+    production = settings.app_env == "production"
+    app = FastAPI(
+        title="AdPilot AI",
+        version="0.1.0",
+        lifespan=lifespan,
+        # The API description is not published from a production deployment.
+        docs_url=None if production else "/docs",
+        redoc_url=None if production else "/redoc",
+        openapi_url=None if production else "/openapi.json",
+    )
     app.state.settings = settings
     # With auth configured, bearer JWTs are required and the dev header is ignored (api/tenancy.py).
     app.state.token_verifier = (

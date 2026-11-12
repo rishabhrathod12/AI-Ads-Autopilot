@@ -1,0 +1,115 @@
+# Production-shaped stack. UNVERIFIED: written without Docker available. Do not treat as deployed
+# or tested until `docker compose -f docker-compose.prod.yml config` and a full bring-up succeed.
+#
+# Differences from docker-compose.yml (development):
+#   * APP_ENV=production: the API refuses to start without JWT auth configured, and (when it has a
+#     database) without a database role that respects row-level security.
+#   * One-shot `migrate` and `roles` jobs run before the backend; the backend never migrates.
+#   * The backend connects as the limited `adpilot_app` login role, never as the bootstrap superuser.
+#   * The database is on an internal network with no published port.
+#   * Containers drop capabilities, run with a read-only root filesystem where possible, have
+#     memory limits, restart policies and bounded logs.
+# TLS and HSTS are terminated by a reverse proxy / load balancer in front of the frontend port.
+# Copy .env.production.example to .env.production and run:
+#   docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
+
+x-hardening: &hardening
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: ["ALL"]
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options: {max-size: "10m", max-file: "5"}
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: adpilot
+      POSTGRES_DB: adpilot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U adpilot -d adpilot"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    mem_limit: 1g
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "5"}
+
+  # Applies migrations once, as the bootstrap role (CREATE EXTENSION vector needs a superuser).
+  migrate:
+    build: ./backend
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgresql+asyncpg://adpilot:${POSTGRES_PASSWORD}@db:5432/adpilot
+    depends_on:
+      db: {condition: service_healthy}
+    networks: [internal]
+    restart: "no"
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+
+  # Gives the application role a login password (the migration creates it NOLOGIN).
+  roles:
+    image: pgvector/pgvector:pg16
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?set APP_DB_PASSWORD}
+    entrypoint: ["sh", "-c"]
+    command:
+      - >
+        echo "ALTER ROLE adpilot_app LOGIN PASSWORD :'pw';" |
+        psql -h db -U adpilot -d adpilot -v ON_ERROR_STOP=1 -v pw="$$APP_DB_PASSWORD"
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    networks: [internal]
+    restart: "no"
+
+  backend:
+    build: ./backend
+    <<: *hardening
+    environment:
+      APP_ENV: production
+      ADS_PROVIDER: mock
+      AD_EXECUTION_ENABLED: "false"
+      # Connects AS the limited role: DB_APP_ROLE stays unset, so there is no SET ROLE to forget.
+      DATABASE_URL: postgresql+asyncpg://adpilot_app:${APP_DB_PASSWORD}@db:5432/adpilot
+      CORS_ORIGINS: ${CORS_ORIGINS:-[]}
+      AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:?set AUTH_JWT_ISSUER}
+      AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:?set AUTH_JWT_AUDIENCE}
+      AUTH_JWKS_URL: ${AUTH_JWKS_URL:?set AUTH_JWKS_URL}
+      LLM_PROVIDER: ${LLM_PROVIDER:-none}
+    env_file:
+      - path: .env.production
+        required: false
+    depends_on:
+      roles: {condition: service_completed_successfully}
+    networks: [internal, default]
+    read_only: true
+    tmpfs: ["/tmp"]
+    mem_limit: 1g
+    cpus: 2
+
+  frontend:
+    build: ./frontend
+    <<: *hardening
+    depends_on:
+      backend: {condition: service_healthy}
+    ports: ["127.0.0.1:8080:8080"]
+    networks: [default]
+    read_only: true
+    tmpfs: ["/tmp"]
+    mem_limit: 256m
+
+networks:
+  internal:
+    internal: true  # no route to the internet; only db, migrate, roles and backend attach to it
+
+volumes:
+  pgdata:

@@ -31,6 +31,8 @@ Dashboard KPIs, campaign and keyword intelligence, wasted-spend and negative-key
 | [docs/ANALYTICS.md](docs/ANALYTICS.md) | KPI rules, findings, anomalies, forecasting |
 | [docs/ML_EVALUATION.md](docs/ML_EVALUATION.md) | Held-out results, including failures |
 | [docs/ASSISTANT.md](docs/ASSISTANT.md) | Grounded assistant, validator, golden and held-out evaluations |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Deployment procedure and readiness checklist (**unverified**) |
+| [docs/OPERATIONS.md](docs/OPERATIONS.md) | Health, logs, monitoring, backup and restore (**unverified**) |
 | [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | Milestones M1-M9 |
 | [docs/ADR/](docs/ADR/) | Architecture decision records |
 

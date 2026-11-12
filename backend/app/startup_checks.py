@@ -1,9 +1,15 @@
 """Fail-safe startup validation for ad execution (see ADR 0007)."""
 
+import uuid
 from dataclasses import dataclass
 
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncEngine
+
 from app.config import Settings
+from app.domain.tenant import TenantContext
 from app.infrastructure.auth.jwt_verifier import ASYMMETRIC_ALGORITHMS
+from app.infrastructure.db.session import tenant_session
 
 
 class UnsafeConfigurationError(RuntimeError):
@@ -115,3 +121,23 @@ def validate_execution_safety(settings: Settings, prereqs: ExecutionPrerequisite
         problems.append("audit sink is not available")
     if problems:
         raise UnsafeConfigurationError("AD_EXECUTION_ENABLED=true refused: " + "; ".join(problems))
+
+
+async def assert_rls_enforced(engine: AsyncEngine, app_role: str | None) -> None:
+    """Refuse to serve if the effective database role could bypass row-level security.
+
+    A superuser or BYPASSRLS role ignores every tenant policy, so one forgotten ``SET ROLE`` would
+    expose all tenants. This checks the role the application's queries really run as (after the same
+    ``SET LOCAL ROLE`` it uses per request), not the role named in configuration.
+    """
+    async with tenant_session(engine, TenantContext(uuid.UUID(int=0)), app_role) as session:
+        row = (
+            await session.execute(
+                text("SELECT rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user")
+            )
+        ).one()
+    if row.rolsuper or row.rolbypassrls:
+        raise UnsafeConfigurationError(
+            "the database role the application runs as can bypass row-level security "
+            "(superuser or BYPASSRLS); connect as a limited role or set DB_APP_ROLE to one"
+        )

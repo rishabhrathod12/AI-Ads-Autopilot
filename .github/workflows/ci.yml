@@ -39,7 +39,13 @@ jobs:
       - run: ruff format --check .
       - run: mypy
       - run: lint-imports
-      - run: pytest -q
+      # Coverage is reported, not gated: no threshold has been agreed. Baseline without a database was
+      # 92%; the SQL stores are covered only when TEST_DATABASE_URL is set (as it is here).
+      - run: pytest -q --cov=app --cov-report=term-missing:skip-covered --cov-report=xml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage.xml
 
   frontend:
     runs-on: ubuntu-latest
@@ -68,3 +74,38 @@ jobs:
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Known-vulnerability scan of the locked runtime dependencies and the frontend's production ones.
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pip-audit
+      - run: pip-audit --require-hashes -r backend/requirements.lock
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm audit --omit=dev --audit-level=high
+        working-directory: frontend
+
+  # Proves both images build from a clean checkout (nothing is pushed anywhere).
+  images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t adpilot-backend:ci backend
+      - run: docker build -t adpilot-frontend:ci frontend
+      - name: Backend image starts and answers /health
+        run: |
+          docker run -d --name api -e APP_ENV=development -p 8000:8000 adpilot-backend:ci
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8000/health && exit 0; sleep 1; done
+          docker logs api; exit 1
+      - name: Compose files are valid
+        run: |
+          docker compose -f docker-compose.yml config -q
+          POSTGRES_PASSWORD=x APP_DB_PASSWORD=x AUTH_JWT_ISSUER=https://i.example/ AUTH_JWT_AUDIENCE=a             AUTH_JWKS_URL=https://i.example/jwks.json docker compose -f docker-compose.prod.yml config -q
+        env:
+          POSTGRES_PASSWORD: ci-only-throwaway

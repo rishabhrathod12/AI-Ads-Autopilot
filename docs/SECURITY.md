@@ -26,6 +26,9 @@ Agents have no write tools. Retrieved text and tool output treated as data. Stru
 
 Append-only; records recommendations, approvals, rejections, execution attempts with actor, before/after, request ID.
 
+## 8b. Production hardening (ADR 0024, unverified in containers)
+Production refuses to start without JWT auth, serves no API docs, and refuses to serve as a database role that can bypass RLS; the backend runs as the limited `adpilot_app` login role, non-root, read-only filesystem, no capabilities; nginx sends CSP and other security headers; dependencies are hash-pinned and scanned (no known vulnerabilities on 2026-11-12). Open: TLS/HSTS in front, secret manager and rotation, log shipping and alerting, digest-pinned base images.
+
 ## 9. Execution safeguards
 **Implemented (ADR 0022, database layer unverified):** approval is bound to the content hash and expires; only admin/owner decide; every decision, expiry and blocked execution is audited in the same transaction; the execute endpoint always answers 409 and no code calls a provider. The list below is the target for M9.
 
