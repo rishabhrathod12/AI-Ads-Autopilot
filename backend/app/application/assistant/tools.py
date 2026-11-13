@@ -9,7 +9,7 @@ it never raises.
 import json
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, replace
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any, Literal
 
@@ -34,11 +34,18 @@ from app.application.ports.forecast_store import ForecastStore
 from app.application.ports.knowledge_store import KnowledgeStore
 from app.application.ports.llm import LLMError, ToolCall, ToolSpec
 from app.application.ports.performance_reader import Freshness, PerformanceReader, Provenance
+from app.application.ports.recommendation_store import RecommendationStore
+from app.domain.ads.models import DataSource
 from app.domain.kpi.metrics import acos_pct
 from app.domain.kpi.periods import DateRange, NoMatureDataError
+from app.domain.recommendations import Recommendation, Status, is_expired
 
 
 class KnowledgeUnavailableError(RuntimeError):
+    pass
+
+
+class RecommendationsUnavailableError(RuntimeError):
     pass
 
 
@@ -79,6 +86,13 @@ class NoArgs(_Args):
     pass
 
 
+class RecommendationArgs(_Args):
+    status: Literal["pending", "approved", "rejected", "expired", "all"] = Field(
+        "pending", description="Which proposals to list. A pending one past expiry is 'expired'."
+    )
+    limit: int = Field(10, ge=1, le=25, description="Max proposals to return, newest first.")
+
+
 class KnowledgeArgs(_Args):
     query: str = Field(
         min_length=3,
@@ -89,16 +103,26 @@ class KnowledgeArgs(_Args):
     limit: int = Field(4, ge=1, le=6, description="How many passages to return.")
 
 
+def _utc_now() -> datetime:
+    return datetime.now(UTC)
+
+
 @dataclass(frozen=True)
 class ToolContext:
     reader: PerformanceReader
     forecasts: ForecastStore
     knowledge: KnowledgeStore | None = None
     embedder: EmbeddingClient | None = None
+    recommendations: RecommendationStore | None = None  # read-only use: list, never decide
+    clock: Callable[[], datetime] = _utc_now  # injectable so expiry is testable
 
     @property
     def has_knowledge(self) -> bool:
         return self.knowledge is not None and self.embedder is not None
+
+    @property
+    def has_recommendations(self) -> bool:
+        return self.recommendations is not None
 
 
 @dataclass(frozen=True)
@@ -215,6 +239,84 @@ async def _forecast(ctx: ToolContext, _: NoArgs) -> Output:
     return Output(data, Provenance(frozenset({spend.data_source}), spend.input_as_of), fresh)
 
 
+_REC_KEEP_STRINGS = frozenset({"rule", "health", "reference_scope"})
+
+
+def _evidence_numbers(evidence: dict[str, Any]) -> dict[str, Any]:
+    """The numbers a proposal was computed from, as real numbers (stored percentages are strings).
+
+    Only these figures can be quoted: the stored prose (rationale, impact) is left out on purpose,
+    because its numbers would not match any typed field and the validator would reject them.
+    """
+    out: dict[str, Any] = {}
+    for key, value in evidence.items():
+        if key == "campaign":
+            out["campaign_name"] = value  # seller-controlled: sanitised under this key
+        elif isinstance(value, bool | int | float):
+            out[key] = value
+        elif isinstance(value, str) and key.endswith("_pct"):
+            try:
+                out[key] = float(value)
+            except ValueError:
+                continue
+        elif isinstance(value, str) and key in _REC_KEEP_STRINGS:
+            out[key] = value
+    return out
+
+
+def _effective_status(rec: Recommendation, now: datetime) -> str:
+    """A pending proposal past its expiry can no longer be decided, whatever is stored."""
+    if rec.status is Status.PENDING and is_expired(rec, now):
+        return Status.EXPIRED.value
+    return rec.status.value
+
+
+def _recommendation_view(rec: Recommendation, status: str) -> dict[str, Any]:
+    cur, new = rec.current_value, rec.proposed_value
+    change = round((new - cur) * 100 / cur, 1) if cur and new is not None else None
+    period = rec.evidence.get("period")
+    return {
+        "type": rec.type.value,
+        "status": status,
+        "confidence": rec.confidence,
+        "entity_type": rec.entity_type,
+        "entity_label": rec.entity_label,
+        "proposed_text": rec.proposed_text,
+        "current_value_paise": cur,
+        "proposed_value_paise": new,
+        "change_pct": change,  # computed here, because the assistant may not calculate
+        "rule": rec.evidence.get("rule"),
+        "period": period if isinstance(period, list) else None,
+        "evidence": _evidence_numbers(rec.evidence),
+        "created": rec.created_at.date().isoformat(),
+        "expires": rec.expires_at.date().isoformat(),
+    }
+
+
+async def _recommendations(ctx: ToolContext, a: RecommendationArgs) -> Output:
+    """Proposals computed by fixed rules, decided by a human. Read-only: explains, never acts."""
+    if ctx.recommendations is None:
+        raise RecommendationsUnavailableError
+    now = ctx.clock()
+    rows = await ctx.recommendations.list_recommendations(None, limit=200)
+    effective = [(r, _effective_status(r, now)) for r in rows]
+    counts = {s.value: 0 for s in Status}
+    for _, status in effective:
+        counts[status] += 1
+    chosen = [(r, s) for r, s in effective if a.status == "all" or s == a.status]
+    chosen.sort(key=lambda rs: (rs[0].created_at, str(rs[0].id)), reverse=True)
+    shown = chosen[: a.limit]
+    sources = frozenset(DataSource(r.data_source) for r, _ in shown)
+    result = {
+        "recommendations": [_recommendation_view(r, s) for r, s in shown],
+        "counts_by_status": counts,
+        "note": "Proposals are computed by fixed rules from the account data and decided by a "
+        "person in the Approval Center. Nothing is executed and no result is predicted. You "
+        "cannot approve, reject or create them.",
+    }
+    return Output(result, Provenance(sources, now), None)
+
+
 async def _knowledge(ctx: ToolContext, a: KnowledgeArgs) -> Output:
     """Reference material (definitions, how-to guidance). It explains; it never reports the
     seller's numbers, and what it says about Amazon policy is the author's, not Amazon's."""
@@ -303,12 +405,23 @@ TOOLS: tuple[ToolDef, ...] = (
         _forecast,
     ),
 )
-REGISTRY: dict[str, ToolDef] = {t.name: t for t in (*TOOLS, KNOWLEDGE_TOOL)}
+RECOMMENDATIONS_TOOL = ToolDef(
+    "get_recommendations",
+    "The stored bid, budget and negative-keyword proposals, with the numbers each was computed "
+    "from, its status and expiry. Use for 'what is proposed', 'why this bid change' and 'what is "
+    "waiting for approval'. Read-only: you cannot approve, reject, create or change anything.",
+    RecommendationArgs,
+    _recommendations,
+)
+REGISTRY: dict[str, ToolDef] = {t.name: t for t in (*TOOLS, KNOWLEDGE_TOOL, RECOMMENDATIONS_TOOL)}
 
 
-def tool_specs(*, knowledge: bool = False) -> list[ToolSpec]:
-    """The knowledge tool is offered only when a knowledge base and embedder are configured."""
-    return [t.spec() for t in (*TOOLS, *((KNOWLEDGE_TOOL,) if knowledge else ()))]
+def tool_specs(*, knowledge: bool = False, recommendations: bool = False) -> list[ToolSpec]:
+    """Knowledge and recommendations are offered only when their stores are configured."""
+    extra = ((KNOWLEDGE_TOOL,) if knowledge else ()) + (
+        (RECOMMENDATIONS_TOOL,) if recommendations else ()
+    )
+    return [t.spec() for t in (*TOOLS, *extra)]
 
 
 def _canonical(arguments: dict[str, Any]) -> str:
@@ -328,7 +441,11 @@ class ToolRunner:
 
     async def run(self, call: ToolCall) -> Evidence | ToolError:
         tool = REGISTRY.get(call.name)
-        if tool is None or (tool is KNOWLEDGE_TOOL and not self._ctx.has_knowledge):
+        if (
+            tool is None
+            or (tool is KNOWLEDGE_TOOL and not self._ctx.has_knowledge)
+            or (tool is RECOMMENDATIONS_TOOL and not self._ctx.has_recommendations)
+        ):
             return ToolError("unknown_tool", f"There is no tool named {call.name!r}.")
         try:
             args = tool.args.model_validate(call.arguments)
@@ -367,6 +484,8 @@ class ToolRunner:
             )
         except (InsufficientHistoryError, NoTrafficError) as exc:
             return ToolError("insufficient_history", str(exc))
+        except RecommendationsUnavailableError:
+            return ToolError("not_available", "Recommendations cannot be read right now.")
         except (KnowledgeUnavailableError, LLMError):
             # An embedding outage or a missing knowledge base must not fail the whole answer.
             return ToolError(

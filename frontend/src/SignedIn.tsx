@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ApprovalCenter } from "./ApprovalCenter";
 import { Assistant } from "./Assistant";
 import { Dashboard } from "./Dashboard";
+import { Insights } from "./Insights";
 import { Shell } from "./Shell";
 import { Team } from "./Team";
 import { identity } from "./api";
@@ -108,6 +109,7 @@ function Workspace() {
             : undefined
         }
       />
+      <Insights orgId={active.id} role={active.role} />
       <ApprovalCenter orgId={active.id} fixedRole={active.role} />
       {adminUp && <Team orgId={active.id} role={active.role} />}
       {analystUp && <Assistant orgId={active.id} />}

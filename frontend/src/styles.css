@@ -186,3 +186,9 @@ button.secondary { color: var(--text-secondary); }
   .grid, .crosshair { stroke: GrayText; }
 }
 @media (prefers-reduced-motion: reduce) { .refreshing { transition: none; } }
+
+/* insights */
+.insights { margin: 32px 0; }
+.insights h2 { margin: 0 0 8px; }
+.insights h3 { margin: 20px 0 4px; font-size: 1rem; }
+.insight-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0 12px; }

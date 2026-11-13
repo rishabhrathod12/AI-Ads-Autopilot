@@ -232,3 +232,143 @@ export interface Member {
   status: "active" | "invited";
   created_at: string;
 }
+
+// ---- Insights: keyword findings, anomalies, forecast, audit trail ---------------------------------
+
+export interface Span {
+  start: string;
+  end: string;
+  days: number;
+}
+export interface Reference {
+  cvr: number;
+  cvr_pct: number;
+  scope: "campaign" | "account";
+}
+export type FindingLevel = "confirmed" | "watch";
+export interface FindingTarget {
+  id: string;
+  external_id: string;
+  text: string;
+  match_type: string;
+}
+export interface FindingTerm {
+  id: string;
+  external_id: string;
+  term: string;
+}
+export interface WastedTarget {
+  target: FindingTarget;
+  campaign_name: string;
+  totals: Totals;
+  level: FindingLevel;
+  chance_of_zero_orders_pct: number;
+  reference: Reference;
+  projected_monthly_spend_paise: number;
+}
+export interface UnderperformingTarget {
+  target: FindingTarget;
+  campaign_name: string;
+  totals: Totals;
+  kpis: Kpis;
+  chance_pct: number;
+  reference: Reference;
+}
+export interface NegativeCandidate {
+  term: FindingTerm;
+  parent_target_text: string | null;
+  campaign_name: string;
+  totals: Totals;
+  level: FindingLevel;
+  chance_of_zero_orders_pct: number;
+  reference: Reference;
+  projected_monthly_spend_paise: number;
+}
+export interface Opportunity {
+  term: FindingTerm;
+  parent_target_text: string | null;
+  campaign_name: string;
+  totals: Totals;
+  kpis: Kpis;
+  cvr_lower_bound_pct: number;
+  strength: "strong" | "moderate";
+  reference: Reference;
+}
+export interface Findings {
+  period: Span;
+  truncated_days: number;
+  target_acos_pct: number;
+  wasted_targets: WastedTarget[];
+  underperforming_targets: UnderperformingTarget[];
+  negative_candidates: NegativeCandidate[];
+  opportunities: Opportunity[];
+  low_data_targets: number;
+  low_data_terms: number;
+  unjudged_campaigns: number;
+  counts: { wasted_targets: number; underperforming_targets: number; negative_candidates: number; opportunities: number; limit_per_list: number };
+}
+
+export type AnomalyMetric = "cvr" | "cpc" | "spend";
+export interface AnomalyEpisode {
+  campaign: { id: string; name: string };
+  metric: AnomalyMetric;
+  direction: "up" | "down";
+  severity: "alert" | "watch";
+  status: "ongoing" | "subsided";
+  onset: string;
+  detected_on: string;
+  alert_on: string | null;
+  last_day: string;
+  reference_value: number;
+  observed_value: number;
+  relative_change_pct: number;
+}
+export interface AcosContext {
+  previous_pct: number;
+  current_pct: number;
+  change_points: number;
+  main_driver: { name: string; contribution_points: number } | null;
+}
+export interface Anomalies {
+  monitor: Span;
+  reference: Span;
+  episodes: AnomalyEpisode[];
+  skipped: { campaign_external_id: string; metric: AnomalyMetric; reason: string }[];
+  acos_context: Record<string, AcosContext | null>;
+}
+
+export interface ForecastPoint {
+  date: string;
+  point: number;
+  lower: number;
+  upper: number;
+}
+export interface StoredForecast {
+  id: string;
+  metric: "spend" | "sales";
+  model: string;
+  used_baseline: boolean;
+  train_days: number;
+  train_end: string;
+  horizon_start: string;
+  horizon_end: string;
+  points: ForecastPoint[];
+  params: { reason?: string; interval_level?: number; cv_coverage?: number | null };
+  data_source: string;
+  created_at: string;
+}
+export interface AccountForecast {
+  spend: StoredForecast;
+  sales: StoredForecast;
+  acos_pct: number | null;
+  acos_note: string;
+}
+
+export interface AuditEntry {
+  id: string;
+  actor: string;
+  action: string;
+  entity: { type: string | null; id: string | null };
+  request_id: string | null;
+  created_at: string;
+}

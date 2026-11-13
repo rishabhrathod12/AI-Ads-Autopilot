@@ -46,3 +46,10 @@ A throwaway local PostgreSQL 18.6 cluster with pgvector 0.8.7 (built from the of
  - Query timing: dashboard 0.03-0.04 s; keyword findings 0.9-1.2 s (ML_EVALUATION.md section 6).
  STILL NOT VERIFIED: PostgreSQL 16 (the image CI and Compose use), Docker image builds, Compose bring-up, nginx config, restore
  rehearsal, load under concurrency. M3 accuracy gates remain failed/known limitations (this verification does not change them).
+
+UPDATE 2026-11-13 (supersedes older lines above where they conflict):
+ - Auth0 sign-in + invitation-only access: implemented and tested (ADR 0026, docs/AUTH_SETUP.md); NOT run against a real Auth0 tenant; Docker image (nginx CSP, build args) not updated.
+ - Scheduled jobs: `python -m app.cli run-jobs` (expire recommendations, refresh forecast), tenant-isolated, advisory-locked (ADR 0027, migration 0008); tested on PG 18, not run from a container or scheduler.
+ - Frontend Insights panel: keyword findings, anomalies, forecast (create/refresh), audit trail (admins). 77 frontend tests pass.
+ - Backend with a database: 890 passed, 0 skipped (PG 18.6, local throwaway cluster). CI was green on d7018f3.
+ - Still open: real Amazon data (blocked on access), ML accuracy gates, RAG quality, Bid/Budget agents, container verification of the new auth and jobs.

@@ -159,3 +159,10 @@ stricter rule and have not been re-run.
 - Real authentication before any non-local deployment and before M6.
 - OpenAI structured-output and tool-calling behaviour has now been exercised live through this evaluation, but only
   on `gpt-4.1-mini`.
+
+## Update 2026-11-13: recommendations tool (ADR 0028)
+
+The assistant can now list and explain stored recommendations through the read-only tool `get_recommendations` (and the graph has a
+`recommendation_review` specialist). The system prompt and supervisor prompt changed. **The golden, held-out and agent evaluations above
+were run before this change and have not been re-run**, so they do not describe the current prompts. Re-running them (pre-registered,
+live model, about $0.2) is open.

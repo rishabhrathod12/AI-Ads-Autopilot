@@ -33,6 +33,7 @@ from app.infrastructure.db.audit_store import SqlAuditStore
 from app.infrastructure.db.forecast_store import SqlForecastStore
 from app.infrastructure.db.knowledge_store import SqlKnowledgeStore
 from app.infrastructure.db.performance_reader import SqlPerformanceReader
+from app.infrastructure.db.recommendation_store import SqlRecommendationStore
 from app.infrastructure.db.session import tenant_session
 from app.infrastructure.llm.factory import build_budgeted_client, build_embedder, pricing_of
 
@@ -93,6 +94,7 @@ async def get_assistant(
                 SqlForecastStore(session, org),
                 knowledge,
                 embedder,
+                SqlRecommendationStore(session, org),
             )
             return AssistantService(
                 llm, ctx, store, pricing_of(settings), engine=settings.assistant_engine

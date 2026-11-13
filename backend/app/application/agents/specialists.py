@@ -9,11 +9,16 @@ from dataclasses import dataclass
 from typing import Literal, get_args
 
 SpecialistName = Literal[
-    "campaign_analysis", "keyword_intelligence", "performance_prediction", "ppc_reporting"
+    "campaign_analysis",
+    "keyword_intelligence",
+    "performance_prediction",
+    "ppc_reporting",
+    "recommendation_review",
 ]
 SPECIALIST_NAMES: tuple[SpecialistName, ...] = get_args(SpecialistName)
 
 KNOWLEDGE = "search_knowledge"
+RECOMMENDATIONS = "get_recommendations"
 
 
 @dataclass(frozen=True)
@@ -48,6 +53,13 @@ SPECIALISTS: dict[str, Specialist] = {
             "performance_prediction",
             "The stored 14-day forecast of spend, sales and ACOS and how it was chosen.",
             ("get_account_forecast", KNOWLEDGE),
+        ),
+        Specialist(
+            "recommendation_review",
+            "The stored bid, budget and negative-keyword proposals: what is proposed, why (the "
+            "numbers each was computed from), what is waiting for a person's approval. Explains "
+            "existing proposals only; it cannot create, approve or reject any.",
+            (RECOMMENDATIONS, KNOWLEDGE),
         ),
         Specialist(
             "ppc_reporting",

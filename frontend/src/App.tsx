@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ApprovalCenter } from "./ApprovalCenter";
 import { Assistant } from "./Assistant";
 import { Dashboard } from "./Dashboard";
+import { Insights } from "./Insights";
 import { Shell } from "./Shell";
 import { SignedIn } from "./SignedIn";
 import { authConfig } from "./auth";
@@ -70,6 +71,7 @@ function DevApp() {
               setOrgId(null);
             }}
           />
+          <Insights orgId={orgId} />
           <ApprovalCenter orgId={orgId} />
           <Assistant orgId={orgId} />
         </>

@@ -280,7 +280,10 @@ async def run_assistant(
     messages += [Message(role, text) for role, text in history]
     messages.append(Message("user", question))
     state = RunState(messages, ToolRunner(ctx, max_calls=max_tool_calls))
-    tools = [*tool_specs(knowledge=ctx.has_knowledge), final_answer_spec()]
+    tools = [
+        *tool_specs(knowledge=ctx.has_knowledge, recommendations=ctx.has_recommendations),
+        final_answer_spec(),
+    ]
 
     while state.llm_calls < max_llm_calls:
         started = time.monotonic()

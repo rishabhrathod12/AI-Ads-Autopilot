@@ -86,13 +86,14 @@ def test_the_toolset_is_exactly_the_expected_read_only_set() -> None:
         "get_anomalies",
         "get_account_forecast",
         "search_knowledge",
+        "get_recommendations",  # read-only: lists stored proposals, never decides (ADR 0028)
     }
     for name in REGISTRY:
         assert name.startswith(("get_", "search_")), f"{name}: tools must be read-only"
 
 
 def test_no_tool_accepts_a_tenant_or_organization_parameter() -> None:
-    for spec in tool_specs(knowledge=True):
+    for spec in tool_specs(knowledge=True, recommendations=True):
         props = spec.parameters.get("properties", {})
         assert not [p for p in props if "org" in p or "tenant" in p], spec.name
         assert spec.parameters["additionalProperties"] is False
@@ -169,7 +170,8 @@ async def test_campaign_overview_matches_the_service(data: GeneratedData) -> Non
 
 async def test_every_tool_runs_and_returns_tagged_evidence(data: GeneratedData) -> None:
     r = runner(data, max_calls=20)
-    account_tools = [n for n in REGISTRY if n != "search_knowledge"]  # covered in test_knowledge
+    # search_knowledge is covered in test_knowledge, get_recommendations in test_recommendation_tool
+    account_tools = [n for n in REGISTRY if n not in ("search_knowledge", "get_recommendations")]
     for name in account_tools:
         ev = evidence(await r.run(call(name)))
         assert ev.tool == name

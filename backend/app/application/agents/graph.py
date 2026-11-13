@@ -56,7 +56,7 @@ from app.application.ports.llm import (
 class Plan(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    specialists: list[SpecialistName] = Field(max_length=4)
+    specialists: list[SpecialistName] = Field(max_length=len(SPECIALIST_NAMES))
     rationale: str = Field(max_length=300)
 
 
@@ -122,6 +122,7 @@ class GraphRun:
         self.history = [Message(role, text) for role, text in history]
         self.limits = limits
         self.knowledge = ctx.has_knowledge
+        self.recommendations = ctx.has_recommendations
         self.state = RunState([], ToolRunner(ctx, max_calls=limits.max_tool_calls))
         self.gathered: list[tuple[ToolCall, Evidence | ToolError]] = []
         self.plan = Plan(specialists=[], rationale="")
@@ -199,9 +200,16 @@ class GraphRun:
     async def specialist_node(self, state: GraphState) -> GraphState:
         pending = list(state.get("pending", []))
         spec = SPECIALISTS[pending.pop(0)]
-        allowed = {t for t in spec.tools if t != "search_knowledge" or self.knowledge}
+        allowed = {
+            t
+            for t in spec.tools
+            if (t != "search_knowledge" or self.knowledge)
+            and (t != "get_recommendations" or self.recommendations)
+        }
         tools: list[ToolSpec] = [
-            t for t in tool_specs(knowledge=self.knowledge) if t.name in allowed
+            t
+            for t in tool_specs(knowledge=self.knowledge, recommendations=self.recommendations)
+            if t.name in allowed
         ]
         messages = [
             Message("system", specialist_prompt(spec)),

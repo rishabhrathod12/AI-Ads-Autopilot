@@ -1,8 +1,12 @@
 import { currentTokenGetter } from "./auth";
 import type {
+  AccountForecast,
+  Anomalies,
   AssistantRun,
+  AuditEntry,
   Campaigns,
   Envelope,
+  Findings,
   GenerateResult,
   Health,
   Keywords,
@@ -145,4 +149,22 @@ export const analytics = {
     get<Campaigns>(`/campaigns${range(from, to)}`, org, signal),
   keywords: (org: string, from?: string, to?: string, signal?: AbortSignal) =>
     get<Keywords>(`/keywords${range(from, to)}${from || to ? "&" : "?"}limit=15`, org, signal),
+};
+
+export const insights = {
+  findings: (org: string, signal?: AbortSignal) => get<Findings>("/keywords/findings", org, signal),
+  anomalies: (org: string, signal?: AbortSignal) => get<Anomalies>("/anomalies", org, signal),
+  /** The stored forecast, or null when none has been created yet (the API answers 404). */
+  forecast: async (org: string, signal?: AbortSignal): Promise<Envelope<AccountForecast> | null> => {
+    try {
+      return await get<AccountForecast>("/forecasts/account", org, signal);
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 404) return null;
+      throw e;
+    }
+  },
+  createForecast: (org: string, role: string | undefined, signal?: AbortSignal) =>
+    post<unknown>("/forecasts/account", org, {}, signal, role),
+  audit: (org: string, role: string | undefined, signal?: AbortSignal) =>
+    get<AuditEntry[]>("/audit-logs?limit=50", org, signal, role),
 };
