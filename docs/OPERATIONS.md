@@ -47,10 +47,10 @@ Postgres holds everything, including approvals and the audit trail (insert-only 
 | Apply a release | build new images, run `migrate`, then restart `backend` and `frontend` (single instance: brief downtime) |
 | Rotate DB password | `ALTER ROLE adpilot_app PASSWORD '...'`, update `.env.production`, restart `backend` |
 | Rotate JWT keys | handled by the identity provider (JWKS is cached 10 minutes by the API) |
-| Expire stale recommendations | none runs automatically; a pending recommendation past `expires_at` is treated as expired and can no longer be approved |
+| Expire stale recommendations, refresh forecasts | `python -m app.cli run-jobs` once a day from cron (ADR 0027; Compose: `docker compose -f docker-compose.prod.yml run --rm --no-deps backend python -m app.cli run-jobs`, **unverified**). A pending recommendation past `expires_at` is already refused for approval without it |
 | Investigate an approval | `GET /api/v1/audit-logs?entity_type=recommendation&entity_id=<id>` (admin) |
 
 ## Known operational limits
 - Single backend instance only: migrations are a separate job, but the assistant rate limit and the JWKS cache are per process.
-- No automatic expiry job, no alerting, no log shipping, no metrics, no failed-login throttling.
+- The jobs only run when cron (or similar) starts them, and nothing alerts on a failed run except its exit code; no log shipping, no metrics, no failed-login throttling.
 - Analytics query performance on a realistic data volume has not been measured.

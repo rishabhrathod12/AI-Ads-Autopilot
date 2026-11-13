@@ -2,7 +2,7 @@
 
 import argparse
 import asyncio
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import UUID, uuid4
 
@@ -20,6 +20,7 @@ from app.config import Settings
 from app.domain.auth import Role
 from app.domain.tenant import TenantContext
 from app.infrastructure.db.ads_store import SqlAdsStore
+from app.infrastructure.db.job_runner import JOBS, run_jobs
 from app.infrastructure.db.knowledge_store import SqlKnowledgeStore
 from app.infrastructure.db.member_store import SqlMemberStore
 from app.infrastructure.db.models import Organization
@@ -82,6 +83,26 @@ async def bootstrap_owner(settings: Settings, email: str, org_id: UUID, org_name
         return f"Invited {email} as owner of {org_id}; they can now sign in."
     finally:
         await engine.dispose()
+
+
+async def run_scheduled_jobs(
+    settings: Settings, jobs: list[str], org_ids: list[UUID] | None, force: bool
+) -> int:
+    """Run maintenance jobs for every organization (or the given ones). Exit 1 if any failed."""
+    if settings.database_url is None:
+        raise SystemExit("DATABASE_URL is not set")
+    engine = create_engine(settings.database_url.get_secret_value())
+    try:
+        outcomes = await run_jobs(
+            engine, settings.db_app_role, jobs, datetime.now(UTC), org_ids=org_ids, force=force
+        )
+    finally:
+        await engine.dispose()
+    for o in outcomes:
+        print(f"{o.status:8} {o.job:9} {o.organization_id}  {o.detail}")
+    failed = sum(o.status == "failed" for o in outcomes)
+    print(f"{len(outcomes)} job run(s), {failed} failed")
+    return 1 if failed else 0
 
 
 async def llm_check(client: LLMClient, pricing: Pricing) -> list[str]:
@@ -151,6 +172,12 @@ def main() -> None:
     boot.add_argument("--email", required=True)
     boot.add_argument("--org-id", type=UUID, default=None, help="existing org; default: a new one")
     boot.add_argument("--org-name", default="My Organization")
+    jobs = sub.add_parser(
+        "run-jobs", help="run scheduled maintenance (expire recommendations, refresh forecasts)"
+    )
+    jobs.add_argument("--jobs", nargs="+", choices=JOBS, default=list(JOBS))
+    jobs.add_argument("--org-id", type=UUID, action="append", help="only this org (repeatable)")
+    jobs.add_argument("--force", action="store_true", help="refresh forecasts even if recent")
     sub.add_parser("llm-check", help="make one tiny real request to verify the LLM configuration")
     ingest = sub.add_parser(
         "ingest-knowledge", help="chunk, embed and store the reference documents (idempotent)"
@@ -166,6 +193,10 @@ def main() -> None:
         except LLMError as exc:
             raise SystemExit(f"ingest-knowledge failed: {type(exc).__name__}: {exc}") from None
         return
+    if args.command == "run-jobs":
+        raise SystemExit(
+            asyncio.run(run_scheduled_jobs(settings, args.jobs, args.org_id, args.force))
+        )
     if args.command == "bootstrap-owner":
         print(
             asyncio.run(

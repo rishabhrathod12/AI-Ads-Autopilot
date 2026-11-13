@@ -56,3 +56,21 @@ async def subject_session(
             text("SELECT set_config('app.subject', :subject, true)"), {"subject": subject}
         )
         yield session
+
+
+@asynccontextmanager
+async def maintenance_session(
+    engine: AsyncEngine, app_role: str | None = None
+) -> AsyncIterator[AsyncSession]:
+    """A transaction that may list organizations; for the scheduled-job runner only (0008).
+
+    Nothing else becomes visible: every other table keeps its tenant policy, and no tenant is set.
+    Use it to read organization ids, then do the real work in ``tenant_session`` per organization.
+    """
+    async with AsyncSession(engine, expire_on_commit=False) as session, session.begin():
+        if app_role is not None:
+            if not _ROLE_RE.match(app_role):
+                raise ValueError("invalid database role name")
+            await session.execute(text(f'SET LOCAL ROLE "{app_role}"'))
+        await session.execute(text("SELECT set_config('app.maintenance', 'on', true)"))
+        yield session
