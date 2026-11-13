@@ -1,8 +1,9 @@
 """OpenAI Chat Completions adapter over httpx (no vendor SDK; the mapping is explicit and tested).
 
-Verified so far only against a mocked transport that follows the documented request/response
-shapes. It has NOT been called against the live API; ``python -m app.cli llm-check`` does that
-with a single tiny request once a key is configured.
+Unit tests use a mocked transport that follows the documented request/response shapes. The
+adapter has also been run live, with ``gpt-4.1-mini``, by the pre-registered assistant evaluations
+(docs/ASSISTANT.md, backend/tests/evals/results/); ``python -m app.cli llm-check`` verifies a
+configuration with a single tiny request.
 
 Error messages carry the HTTP status and the provider's error *code* only, never its free-text
 message (which can echo prompt content or part of a key) and never the key itself.

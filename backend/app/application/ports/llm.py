@@ -2,7 +2,8 @@
 
 Deliberately no token streaming. The assistant's answers are checked by code (every number must
 trace to a tool result) before anyone sees them, so streaming raw model tokens would show
-unverified numbers. The API streams *events* (tool calls, tool results, the validated final answer).
+unverified numbers. The API returns the validated answer in one response; there is no event or
+token stream.
 """
 
 from collections.abc import Sequence

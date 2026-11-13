@@ -3,21 +3,22 @@ ADPILOT AI - PROJECT STATUS (verified by audit 2026-11-12; supersedes optimistic
 Data: MOCK only. No Amazon Ads API integration. AD_EXECUTION_ENABLED=false (startup refuses true).
 
 M0 Planning ............ complete
-M1 Foundation .......... mostly done; docker compose stack never run (no Docker on dev machine)
-M2 Mock data/providers . implemented; DB-backed tests not run in this environment
+M1 Foundation .......... implemented (committed with M0 in 40a5dce); compose stack never run (no Docker on dev machine)
+M2 Mock data/providers . implemented; DB-backed tests verified on PostgreSQL 18.6 (see verification update below)
 M3 Analytics and ML .... implemented; accuracy gates NOT met (see docs/ML_EVALUATION.md)
                          - negative-term precision 0.77 vs 0.85 (known failure)
                          - learned forecast not shown to beat seasonal-naive -> default forecast is seasonal-naive
                          - evals use the same generator as the data: no real-account accuracy evidence
 M4 GenAI and RAG ....... implemented; small single-sample evaluations only
 M5 Multi-agent ......... partial: supervisor + 4 read-only specialists; no Bid/Budget agents, no checkpointer
-M6 Approval workflow ... not started (needs real authentication first, ADR 0008)
-M7 Audit/observability . partial (structured logs, request ids); no audit log table
-M8 Deployment .......... not started
+Auth (ADR 0021) ........ implemented (JWT, roles); no identity provider, provisioning or frontend login
+M6 Approval workflow ... implemented and DB-verified on PG 18 (ADR 0022); Approval Center UI added; no Bid/Budget agents, no checkpointer, no expiry job
+M7 Audit/observability . implemented (ADR 0023; owner numbering; the plan's M7 is evaluation and testing, partial); audit_logs table exists since 0001; no metrics, tracing or alerting
+M8 Deployment .......... files written (ADR 0024) but NOT built or run: no image build, Compose, nginx or restore verified
 M9 Amazon Ads API ...... endpoint-agnostic layer built and disabled (ADR 0025); NO real Amazon call exists; blocked on eligibility/access + verified docs
 
-Latest checks (2026-11-12): ruff, ruff format, mypy strict, import-linter pass; frontend lint/typecheck/48 tests pass;
-backend pytest: all unit tests pass, 61 Postgres tests skipped (no TEST_DATABASE_URL).
+Latest checks (2026-11-12): ruff, ruff format, mypy strict, import-linter pass; frontend lint/typecheck/60 tests pass;
+backend pytest: 764 pass, 76 Postgres tests skipped without TEST_DATABASE_URL (840 pass, 0 skipped with it; see below).
 
 M3 close-out: step 1 (cleanup, docs) done; step 3 (known limitations: docs/ML_EVALUATION.md section 7) done.
 Step 4 (independent evaluations) run: see docs/ML_EVALUATION.md 4d. Two known failures recorded; default forecast NOT changed
