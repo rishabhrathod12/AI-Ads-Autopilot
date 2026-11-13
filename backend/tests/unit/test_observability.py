@@ -227,5 +227,6 @@ def test_every_state_changing_route_is_known_and_audited() -> None:
         "/api/v1/recommendations/{rec_id}/approve": "recommendation.approved",
         "/api/v1/recommendations/{rec_id}/reject": "recommendation.rejected",
         "/api/v1/recommendations/{rec_id}/execute": "execution.blocked",
+        "/api/v1/members": "member.invited",
     }
     assert posts == set(audited)

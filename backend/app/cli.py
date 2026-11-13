@@ -14,11 +14,14 @@ from app.application.llm.cost import Pricing
 from app.application.llm.redact import redact
 from app.application.ports.knowledge_store import SourceType
 from app.application.ports.llm import LLMClient, LLMError, Message
+from app.application.ports.member_store import AlreadyMemberError
 from app.application.sync_service import SyncService
 from app.config import Settings
+from app.domain.auth import Role
 from app.domain.tenant import TenantContext
 from app.infrastructure.db.ads_store import SqlAdsStore
 from app.infrastructure.db.knowledge_store import SqlKnowledgeStore
+from app.infrastructure.db.member_store import SqlMemberStore
 from app.infrastructure.db.models import Organization
 from app.infrastructure.db.session import create_engine, tenant_session
 from app.infrastructure.llm.factory import build_ingest_embedder, build_resilient_client, pricing_of
@@ -51,6 +54,32 @@ async def seed_mock(settings: Settings, org_id: UUID, org_name: str) -> None:
             f"{result.targets} targets, {result.search_terms} search terms, "
             f"{result.metrics_rows} metric rows ({result.rows_quarantined} quarantined)"
         )
+    finally:
+        await engine.dispose()
+
+
+async def bootstrap_owner(settings: Settings, email: str, org_id: UUID, org_name: str) -> str:
+    """Create the organization (if new) and invite its first owner. Idempotent.
+
+    Sign-in is by invitation, so someone must be invited before anyone can log in. The owner's
+    first login with a provider-verified email links them (ADR 0026).
+    """
+    if settings.database_url is None:
+        raise SystemExit("DATABASE_URL is not set")
+    engine = create_engine(settings.database_url.get_secret_value())
+    try:
+        async with tenant_session(engine, TenantContext(org_id), settings.db_app_role) as session:
+            if (
+                await session.scalar(select(Organization.id).where(Organization.id == org_id))
+                is None
+            ):
+                session.add(Organization(id=org_id, name=org_name))
+                await session.flush()
+            try:
+                await SqlMemberStore(session, org_id).invite(email, Role.OWNER)
+            except AlreadyMemberError:
+                return f"{email} is already a member of {org_id}"
+        return f"Invited {email} as owner of {org_id}; they can now sign in."
     finally:
         await engine.dispose()
 
@@ -118,6 +147,10 @@ def main() -> None:
     seed.add_argument("--org-name", default="Demo Organization (MOCK)")
     seed.add_argument("--seed", type=int, default=None)
     seed.add_argument("--days", type=int, default=None)
+    boot = sub.add_parser("bootstrap-owner", help="invite the first owner of an organization")
+    boot.add_argument("--email", required=True)
+    boot.add_argument("--org-id", type=UUID, default=None, help="existing org; default: a new one")
+    boot.add_argument("--org-name", default="My Organization")
     sub.add_parser("llm-check", help="make one tiny real request to verify the LLM configuration")
     ingest = sub.add_parser(
         "ingest-knowledge", help="chunk, embed and store the reference documents (idempotent)"
@@ -132,6 +165,13 @@ def main() -> None:
                 print(line)
         except LLMError as exc:
             raise SystemExit(f"ingest-knowledge failed: {type(exc).__name__}: {exc}") from None
+        return
+    if args.command == "bootstrap-owner":
+        print(
+            asyncio.run(
+                bootstrap_owner(settings, args.email, args.org_id or uuid4(), args.org_name)
+            )
+        )
         return
     if args.command == "llm-check":
         try:

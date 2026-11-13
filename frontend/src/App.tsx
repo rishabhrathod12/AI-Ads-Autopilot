@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
-import { fetchHealth } from "./api";
+import { Auth0Provider } from "@auth0/auth0-react";
+import { useState } from "react";
 import { ApprovalCenter } from "./ApprovalCenter";
 import { Assistant } from "./Assistant";
 import { Dashboard } from "./Dashboard";
-import type { Health } from "./types";
+import { Shell } from "./Shell";
+import { SignedIn } from "./SignedIn";
+import { authConfig } from "./auth";
 
 const STORAGE_KEY = "adpilot.devOrgId";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -53,48 +55,12 @@ function TenantPrompt({ onSave }: { onSave: (id: string) => void }) {
   );
 }
 
-function HealthStatus() {
-  const [state, setState] = useState<{ kind: "loading" } | { kind: "ok"; health: Health } | { kind: "error"; message: string }>({
-    kind: "loading",
-  });
-  useEffect(() => {
-    const controller = new AbortController();
-    fetchHealth(controller.signal)
-      .then((health) => setState({ kind: "ok", health }))
-      .catch((e: unknown) => {
-        if (controller.signal.aborted) return;
-        setState({ kind: "error", message: e instanceof Error ? e.message : "Unknown error" });
-      });
-    return () => controller.abort();
-  }, []);
-
-  return (
-    <footer className="status">
-      {state.kind === "loading" && <p>Checking backend…</p>}
-      {state.kind === "error" && <p role="alert">Backend unavailable: {state.message}</p>}
-      {state.kind === "ok" && (
-        <>
-          <p>Backend status: {state.health.status}</p>
-          <p>
-            Data source: <strong>{state.health.data_source}</strong>
-            {state.health.data_source === "MOCK" && " (synthetic data, not live Amazon data)"}
-          </p>
-          <p>Ad execution: {state.health.execution_enabled ? "ENABLED" : "disabled"}</p>
-        </>
-      )}
-    </footer>
-  );
-}
-
-export default function App() {
+/** The development flow: no sign-in, the organization id is typed. The server refuses it in production. */
+function DevApp() {
   const [orgId, setOrgId] = useState<string | null>(readStored);
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>AdPilot AI</h1>
-        <p className="muted">Amazon PPC analytics</p>
-      </header>
+    <Shell>
       {orgId ? (
         <>
           <Dashboard
@@ -115,7 +81,20 @@ export default function App() {
           }}
         />
       )}
-      <HealthStatus />
-    </div>
+    </Shell>
+  );
+}
+
+export default function App() {
+  const cfg = authConfig();
+  if (!cfg) return <DevApp />;
+  return (
+    <Auth0Provider
+      domain={cfg.domain}
+      clientId={cfg.clientId}
+      authorizationParams={{ redirect_uri: window.location.origin, audience: cfg.audience }}
+    >
+      <SignedIn />
+    </Auth0Provider>
   );
 }

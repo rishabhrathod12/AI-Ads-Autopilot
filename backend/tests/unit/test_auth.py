@@ -19,7 +19,7 @@ from fastapi.testclient import TestClient
 
 from app.api.main import create_app
 from app.api.tenancy import DEV_ORG_HEADER, DEV_ROLE_HEADER, ORG_HEADER, current_principal
-from app.application.ports.auth import AuthError
+from app.application.ports.auth import AuthError, OrganizationAccess
 from app.config import Settings
 from app.domain.auth import Principal, Role
 from app.infrastructure.auth.jwt_verifier import JwtVerifier
@@ -63,6 +63,12 @@ class FakeDirectory:
 
     async def role_for(self, subject: str, organization_id: UUID) -> Role | None:
         return self.roles.get((subject, organization_id))
+
+    async def claim_invitation(self, subject: str, email: str) -> bool:
+        return False
+
+    async def organizations_of(self, subject: str) -> list[OrganizationAccess]:
+        return []
 
 
 def settings(**kw: Any) -> Settings:

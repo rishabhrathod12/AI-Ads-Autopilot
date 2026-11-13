@@ -209,3 +209,26 @@ export interface GenerateResult {
   already_stored: number;
   dropped_by_guardrails: number;
 }
+
+export const ROLES = ["viewer", "analyst", "admin", "owner"] as const;
+export type Role = (typeof ROLES)[number];
+
+export interface OrgAccess {
+  id: string;
+  name: string;
+  role: Role;
+}
+
+export interface Me {
+  subject: string;
+  email: string | null;
+  organizations: OrgAccess[];
+}
+
+export interface Member {
+  id: string;
+  email: string;
+  role: Role;
+  status: "active" | "invited";
+  created_at: string;
+}

@@ -35,3 +35,24 @@ async def tenant_session(
             {"org": str(ctx.organization_id)},
         )
         yield session
+
+
+@asynccontextmanager
+async def subject_session(
+    engine: AsyncEngine, subject: str, app_role: str | None = None
+) -> AsyncIterator[AsyncSession]:
+    """A transaction that can see only the caller's *own* memberships and their organizations.
+
+    Used before an organization is chosen (listing "my organizations", linking an invitation). The
+    subject is the verified token subject, set by the server after verification; it is never taken
+    from a request field. No tenant is set, so no other organization's rows are visible.
+    """
+    async with AsyncSession(engine, expire_on_commit=False) as session, session.begin():
+        if app_role is not None:
+            if not _ROLE_RE.match(app_role):
+                raise ValueError("invalid database role name")
+            await session.execute(text(f'SET LOCAL ROLE "{app_role}"'))
+        await session.execute(
+            text("SELECT set_config('app.subject', :subject, true)"), {"subject": subject}
+        )
+        yield session

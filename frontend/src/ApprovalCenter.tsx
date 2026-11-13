@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { ApiError, recommendations } from "./api";
 import { rupees } from "./format";
-import type { RecStatus, RecType, Recommendation } from "./types";
+import { ROLES, type RecStatus, type RecType, type Recommendation, type Role } from "./types";
 import { useResource } from "./useResource";
 
-// Development only (ADR 0014/0021): with real sign-in the role comes from the membership, not a menu.
-const ROLES = ["viewer", "analyst", "admin", "owner"] as const;
-type Role = (typeof ROLES)[number];
+// The role menu is development only (ADR 0014/0021): when signed in, the role comes from the membership.
 const FILTERS: (RecStatus | "all")[] = ["pending", "approved", "rejected", "expired", "all"];
 
 const TYPE_LABEL: Record<RecType, string> = {
@@ -129,8 +127,9 @@ function Card({
   );
 }
 
-export function ApprovalCenter({ orgId }: { orgId: string }) {
-  const [role, setRole] = useState<Role>("analyst");
+export function ApprovalCenter({ orgId, fixedRole }: { orgId: string; fixedRole?: Role }) {
+  const [devRole, setRole] = useState<Role>("analyst");
+  const role = fixedRole ?? devRole;
   const [filter, setFilter] = useState<RecStatus | "all">("pending");
   const [version, setVersion] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -161,16 +160,20 @@ export function ApprovalCenter({ orgId }: { orgId: string }) {
     <section className="approval" aria-labelledby="approval-title">
       <div className="approval-head">
         <h2 id="approval-title">Approval Center</h2>
-        <label className="role-picker">
-          Acting as (development only)
-          <select value={role} onChange={(e) => setRole(e.target.value as Role)}>
-            {ROLES.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
-        </label>
+        {fixedRole ? (
+          <p className="muted role-note">Your role: {fixedRole}</p>
+        ) : (
+          <label className="role-picker">
+            Acting as (development only)
+            <select value={role} onChange={(e) => setRole(e.target.value as Role)}>
+              {ROLES.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
       <p className="muted">
         Proposals are computed from your analytics by fixed rules. Approving records a decision bound to the content you reviewed;

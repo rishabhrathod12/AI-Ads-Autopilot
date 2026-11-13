@@ -43,6 +43,11 @@ class Settings(BaseSettings):
     auth_jwt_audience: str = ""
     auth_jwks_url: str = ""
     auth_jwt_algorithms: list[str] = ["RS256", "ES256"]
+    # Names of the token claims that carry the user's email and whether the provider verified it.
+    # Used only to link an *invited* user on their first login (ADR 0026). Auth0 access tokens
+    # carry neither by default: add both as namespaced claims with an Action and set these names.
+    auth_email_claim: str = "email"
+    auth_email_verified_claim: str = "email_verified"
     # --- Amazon Ads API (M9). OFF and unconfigured by default. Nothing connects to Amazon until
     # ``amazon_ads_enabled`` is true AND every value below is set; the endpoint mapping is not
     # implemented (docs/AMAZON_ADS_INTEGRATION.md). URLs are configuration: they were not verified.

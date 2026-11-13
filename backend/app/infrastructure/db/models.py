@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint, func
+from sqlalchemy import DateTime, ForeignKey, Index, String, Text, UniqueConstraint, func, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -32,6 +32,8 @@ class Organization(Base):
 
 class User(Base):
     __tablename__ = "users"
+    # Invited users are looked up by lower(email) (ADR 0026, migration 0007).
+    __table_args__ = (Index("uq_users_email_lower", func.lower(text("email")), unique=True),)
     id: Mapped[uuid.UUID] = _uuid_pk()
     email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False)
     auth_subject: Mapped[str | None] = mapped_column(String(255), unique=True)

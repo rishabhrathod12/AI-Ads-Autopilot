@@ -21,7 +21,7 @@ import structlog
 from fastapi import Depends, HTTPException, Request
 
 from app.application.ports.audit_store import AuditStore
-from app.application.ports.auth import AuthError, MembershipDirectory, TokenVerifier
+from app.application.ports.auth import AuthError, Claims, MembershipDirectory, TokenVerifier
 from app.application.ports.forecast_store import ForecastStore
 from app.application.ports.performance_reader import PerformanceReader
 from app.config import Settings
@@ -89,6 +89,38 @@ def _dev_principal(request: Request) -> Principal:
     return Principal("dev", tenant.organization_id, role)
 
 
+def membership_directory(request: Request) -> MembershipDirectory:
+    directory: MembershipDirectory | None = request.app.state.membership_directory
+    if directory is not None:
+        return directory
+    engine = request.app.state.engine
+    if engine is None:
+        raise HTTPException(status_code=503, detail="Database not configured.")
+    settings: Settings = request.app.state.settings
+    return SqlMembershipDirectory(engine, settings.db_app_role)
+
+
+async def verified_claims(request: Request) -> Claims:
+    """Verified token claims with no organization chosen yet. 404 when auth is not configured."""
+    verifier: TokenVerifier | None = request.app.state.token_verifier
+    if verifier is None:
+        raise HTTPException(status_code=404, detail="Authentication is not configured.")
+    try:
+        return await verifier.verify(_bearer_token(request))
+    except AuthError:
+        raise _unauthorized() from None
+
+
+async def link_invitation(directory: MembershipDirectory, claims: Claims) -> None:
+    """First login of an invited user: attach their token subject to the invitation.
+
+    Only a provider-*verified* email counts: otherwise anyone could sign up with an invited
+    address and inherit its role. A user who already has a subject is never re-linked (ADR 0026).
+    """
+    if claims.email is not None and claims.email_verified:
+        await directory.claim_invitation(claims.subject, claims.email)
+
+
 async def _verified_principal(request: Request, verifier: TokenVerifier) -> Principal:
     try:
         claims = await verifier.verify(_bearer_token(request))
@@ -98,14 +130,11 @@ async def _verified_principal(request: Request, verifier: TokenVerifier) -> Prin
         org = UUID(request.headers.get(ORG_HEADER, ""))
     except ValueError:
         raise HTTPException(status_code=400, detail=f"Missing or invalid {ORG_HEADER}.") from None
-    directory: MembershipDirectory | None = request.app.state.membership_directory
-    if directory is None:
-        engine = request.app.state.engine
-        if engine is None:
-            raise HTTPException(status_code=503, detail="Database not configured.")
-        settings: Settings = request.app.state.settings
-        directory = SqlMembershipDirectory(engine, settings.db_app_role)
+    directory = membership_directory(request)
     role = await directory.role_for(claims.subject, org)
+    if role is None:  # maybe an invited user's first request: link, then look again
+        await link_invitation(directory, claims)
+        role = await directory.role_for(claims.subject, org)
     if role is None:
         raise HTTPException(status_code=403, detail="Not a member of this organization.")
     return Principal(claims.subject, org, role)

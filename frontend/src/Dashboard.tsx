@@ -31,7 +31,7 @@ function Banner({ meta }: { meta: Meta | null }) {
   );
 }
 
-export function Dashboard({ orgId, onChangeOrg }: { orgId: string; onChangeOrg: () => void }) {
+export function Dashboard({ orgId, orgName, onChangeOrg }: { orgId: string; orgName?: string; onChangeOrg?: () => void }) {
   const [days, setDays] = useState<number>(DEFAULT_DAYS);
   const [latest, setLatest] = useState<string | null>(null);
   const range = useMemo(
@@ -75,10 +75,13 @@ export function Dashboard({ orgId, onChangeOrg }: { orgId: string; onChangeOrg: 
           ))}
         </div>
         <div className="tenant">
-          <span className="muted">Organization (dev)</span> <code>{orgId.slice(0, 8)}…</code>
-          <button type="button" className="link" onClick={onChangeOrg}>
-            Change
-          </button>
+          <span className="muted">{orgName ? "Organization" : "Organization (dev)"}</span>{" "}
+          {orgName ? <strong>{orgName}</strong> : <code>{orgId.slice(0, 8)}…</code>}
+          {onChangeOrg && (
+            <button type="button" className="link" onClick={onChangeOrg}>
+              Change
+            </button>
+          )}
         </div>
       </div>
 

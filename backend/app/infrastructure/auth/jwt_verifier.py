@@ -18,6 +18,7 @@ ASYMMETRIC_ALGORITHMS = frozenset(
 )
 MAX_TOKEN_CHARS = 8192
 MAX_SUBJECT_CHARS = 255
+MAX_EMAIL_CHARS = 320
 LEEWAY_SECONDS = 30
 
 KeyResolver = Callable[[str], Any]  # token -> verification key
@@ -41,6 +42,8 @@ class JwtVerifier:
         audience: str,
         key_resolver: KeyResolver,
         algorithms: Sequence[str] = ("RS256", "ES256"),
+        email_claim: str = "email",
+        email_verified_claim: str = "email_verified",
     ) -> None:
         bad = set(algorithms) - ASYMMETRIC_ALGORITHMS
         if bad or not algorithms:
@@ -49,6 +52,8 @@ class JwtVerifier:
         self._audience = audience
         self._resolve = key_resolver
         self._algorithms = list(algorithms)
+        self._email_claim = email_claim
+        self._email_verified_claim = email_verified_claim
 
     async def verify(self, token: str) -> Claims:
         if not token or len(token) > MAX_TOKEN_CHARS:
@@ -69,4 +74,9 @@ class JwtVerifier:
         subject = payload.get("sub")
         if not isinstance(subject, str) or not subject or len(subject) > MAX_SUBJECT_CHARS:
             raise AuthError
-        return Claims(subject=subject)
+        email = payload.get(self._email_claim)
+        if not isinstance(email, str) or not email or len(email) > MAX_EMAIL_CHARS:
+            return Claims(subject=subject)
+        # Only a literal JSON true counts as verified ("false", 1 and "true" strings do not).
+        verified = payload.get(self._email_verified_claim) is True
+        return Claims(subject=subject, email=email.strip().lower(), email_verified=verified)

@@ -1,3 +1,4 @@
+import { currentTokenGetter } from "./auth";
 import type {
   AssistantRun,
   Campaigns,
@@ -5,9 +6,12 @@ import type {
   GenerateResult,
   Health,
   Keywords,
+  Me,
+  Member,
   RecEnvelope,
   RecStatus,
   Recommendation,
+  Role,
   Summary,
   Trends,
 } from "./types";
@@ -38,9 +42,17 @@ function devHeaders(orgId: string, role?: string): Record<string, string> {
   return role ? { [DEV_ORG_HEADER]: orgId, [DEV_ROLE_HEADER]: role } : { [DEV_ORG_HEADER]: orgId };
 }
 
+/** Signed in: a bearer token and the chosen organization (the server checks membership and sets the role).
+ *  Not signed in: the development headers, which the server refuses in production. */
+async function requestHeaders(orgId: string, role?: string): Promise<Record<string, string>> {
+  const getToken = currentTokenGetter();
+  if (getToken) return { Authorization: `Bearer ${await getToken()}`, "X-Org-Id": orgId };
+  return devHeaders(orgId, role);
+}
+
 async function get<T>(path: string, orgId: string, signal?: AbortSignal, role?: string): Promise<Envelope<T>> {
   // Development-only tenant header (ADR 0014): real authentication replaces this before deployment.
-  const res = await fetch(`${BASE}/api/v1${path}`, { signal, headers: devHeaders(orgId, role) });
+  const res = await fetch(`${BASE}/api/v1${path}`, { signal, headers: await requestHeaders(orgId, role) });
   if (!res.ok) {
     let title = `Request failed (${res.status})`;
     try {
@@ -75,12 +87,29 @@ async function post<T>(path: string, orgId: string, body: unknown, signal?: Abor
   const res = await fetch(`${BASE}/api/v1${path}`, {
     method: "POST",
     signal,
-    headers: { ...devHeaders(orgId, role), "Content-Type": "application/json" },
+    headers: { ...(await requestHeaders(orgId, role)), "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new ApiError(res.status, await problemTitle(res));
   return (await res.json()) as T;
 }
+
+export const identity = {
+  /** Who am I and which organizations can I act in. Needs a token but no organization. */
+  me: async (signal?: AbortSignal): Promise<Me> => {
+    const getToken = currentTokenGetter();
+    if (!getToken) throw new ApiError(404, "Sign-in is not configured.");
+    const res = await fetch(`${BASE}/api/v1/me`, { signal, headers: { Authorization: `Bearer ${await getToken()}` } });
+    if (!res.ok) throw new ApiError(res.status, await problemTitle(res));
+    return ((await res.json()) as { data: Me }).data;
+  },
+};
+
+export const members = {
+  list: (org: string, signal?: AbortSignal) => get<Member[]>("/members", org, signal),
+  invite: (org: string, email: string, role: Role, signal?: AbortSignal) =>
+    post<{ data: Member }>("/members", org, { email, role }, signal),
+};
 
 export const assistant = {
   createThread: (org: string, signal?: AbortSignal) =>

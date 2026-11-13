@@ -15,6 +15,7 @@ from sqlalchemy import text
 from app.api.errors import problem, register_error_handlers
 from app.api.routers.analytics import router as analytics_router
 from app.api.routers.assistant import router as assistant_router
+from app.api.routers.members import router as members_router
 from app.api.routers.recommendations import router as recommendations_router
 from app.config import Settings
 from app.infrastructure.auth.jwt_verifier import JwtVerifier, jwks_key_resolver
@@ -103,6 +104,8 @@ def create_app(
             audience=settings.auth_jwt_audience,
             key_resolver=jwks_key_resolver(settings.auth_jwks_url),
             algorithms=settings.auth_jwt_algorithms,
+            email_claim=settings.auth_email_claim,
+            email_verified_claim=settings.auth_email_verified_claim,
         )
         if settings.auth_configured
         else None
@@ -138,6 +141,7 @@ def create_app(
     app.include_router(analytics_router)
     app.include_router(assistant_router)
     app.include_router(recommendations_router)
+    app.include_router(members_router)
 
     @app.get("/health")
     async def health() -> dict[str, Any]:
