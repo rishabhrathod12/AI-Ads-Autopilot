@@ -34,8 +34,11 @@
 > on one sample per question with two recorded failures (golden C3 safety, recommendation group D on the single engine), and the action-refusal guard shown
 > only on wordings its author anticipated (ASSISTANT.md, "Round 3").
 >
-> **Still blocked on you:** Amazon Ads API access and documentation; creating the Auth0 tenant; requests phrased by someone else to test the guard; a decision on the
-> Bid/Budget write tool (ADR 0030, still PROPOSED); a container bring-up on a machine with Docker.
+> **Decided 2026-11-15:** ADR 0030 closed as Option A: no Bid/Budget agents, no assistant write tool, no checkpointer or in-chat approval (dropped, not deferred). In the
+> sections above, "No Bid or Budget agent" and "no checkpointer" are therefore decisions, no longer gaps.
+>
+> **Still blocked on you:** Amazon Ads API access and documentation; creating the Auth0 tenant; requests phrased by someone else to test the guard
+> (`python -m app.cli check-guard`); a container bring-up on a machine with Docker.
 
 Audit date: 2026-11-13, commit `b321aff`, working tree clean. Read-only audit.
 Method: I read the source, migrations, tests and evaluation result files, and re-ran static checks and the test suites

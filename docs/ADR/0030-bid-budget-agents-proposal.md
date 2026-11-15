@@ -1,6 +1,6 @@
 # ADR 0030: Bid and Budget agents - options and recommendation
 
-Status: **PROPOSED, not accepted. Needs an owner decision. No code accompanies this ADR.**
+Status: **ACCEPTED 2026-11-15: Option A (the owner chose to close this).** Options B, C and D are not built and not planned. No code accompanies this ADR.
 
 ## Context
 The original plan (ADR 0006, 0018, `docs/AGENT_ARCHITECTURE.md`) had LLM "Bid" and "Budget" specialists that produce recommendations, a human
@@ -59,3 +59,19 @@ fall back to the model's own 9-10 of 12. The precondition in this ADR ("no write
 therefore **met for the tested wordings, not proven in general**. Before Option B is built: a Set 4 of requests written by someone else (offline check
 first, since it needs no model), and Option B itself would still be gated, off by default, with its own pre-registered evaluation including
 prompt-injection tests. Nothing has been built for Option B.
+
+## Decision (2026-11-15): Option A, close it
+The owner closed this ADR as **Option A**: the deterministic calculators (`application/optimization/generate.py`) *are* the Bid and Budget logic. There are no
+LLM "Bid" or "Budget" agents, the assistant keeps **no write tool** (it reads and explains proposals: ADR 0028; it refuses change requests: the guard in
+`assistant/action_guard.py`), and approval stays exclusively in the Approval Center. This follows the project rule that business calculations are
+deterministic and LLMs only reason and explain.
+
+What this closes: the "Bid Optimization" and "Budget Allocation" LLM specialists, the Postgres checkpointer, and an in-chat approval interrupt that
+ADR 0006, ADR 0018 and `docs/AGENT_ARCHITECTURE.md` had planned. They are not deferred; they are dropped.
+
+What it does not close: the refusal guard still lacks independent validation (try wordings with `python -m app.cli check-guard`), and nothing here touches
+the approval workflow, the guardrails or the disabled execution gate.
+
+Reversible: if conversational proposal generation is wanted later, Option B above (a gated, off-by-default `propose` tool that only runs the existing
+generator and creates `pending` proposals) remains the described path; it would need a new ADR, a Set 4 of independently written requests, and its own
+pre-registered evaluation including prompt-injection tests.

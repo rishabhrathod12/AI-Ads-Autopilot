@@ -1,8 +1,8 @@
 """The specialists: each is a named, bounded view onto the existing read-only analytics tools.
 
 A specialist gathers evidence; it never writes the answer (the synthesizer does) and never gets a
-tool outside its list. Bid and Budget specialists belong to M6 because they produce
-recommendations that need the approval workflow (ADR 0018).
+tool outside its list. There are no Bid or Budget specialists: the proposals are produced by
+deterministic calculators and decided by a person (ADR 0022, closed as Option A in ADR 0030).
 """
 
 from dataclasses import dataclass
