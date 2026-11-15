@@ -53,3 +53,5 @@ UPDATE 2026-11-13 (supersedes older lines above where they conflict):
  - Frontend Insights panel: keyword findings, anomalies, forecast (create/refresh), audit trail (admins). 77 frontend tests pass.
  - Backend with a database: 890 passed, 0 skipped (PG 18.6, local throwaway cluster). CI was green on d7018f3.
  - Still open: real Amazon data (blocked on access), ML accuracy gates, RAG quality, Bid/Budget agents, container verification of the new auth and jobs.
+
+ - Forecast default (2026-11-15): seasonal_mean_4 re-tested on fresh seeds with the same rule A/B/C plus interval rule D (ML_EVALUATION.md 4f). B failed again (45%%, -9.3%% on 60 account cases), so the default STAYS seasonal-naive. Known failure recorded.

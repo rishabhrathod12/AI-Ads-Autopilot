@@ -164,6 +164,16 @@ def test_rule_a_independent(data: Collected) -> None:
     assert share >= SHARE_ACCOUNT and gain >= GAIN_ACCOUNT, (share, gain)
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "KNOWN FAILURE, round 2 first run 2026-11-15, mock seeds 61-90 account level (60 cases): "
+        "seasonal_mean_4 no worse in 45% (bar 70%), mean per-case MAE gain -9.3% (bar +5%), "
+        "although pooled MAE (407k vs 419k) and RMSE (494k vs 521k) were slightly lower: it wins "
+        "small and loses big. Rules A, C and D passed; because B fails, the default stays "
+        "seasonal-naive."
+    ),
+)
 def test_rule_b_mock_account(data: Collected) -> None:
     share, gain = share_and_gain(cases_of(data.mock_account))
     assert share >= SHARE_ACCOUNT and gain >= GAIN_ACCOUNT, (share, gain)

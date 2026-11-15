@@ -250,3 +250,26 @@ Recorded, not fixed; none is hidden by a changed threshold.
 6. **Unverified here:** analytics query timing, `EXPLAIN` index review, the Docker Compose stack, and (until a Postgres with pgvector is available) the 61 database-backed tests including RLS isolation.
 7. **Seeds already used** (1-15, 21-40) cannot be reused for new scored claims.
 8. **Independent evaluations (4d):** wasted-target "confirmed" findings are economically unprofitable in 82% of cases at an assumed 30% break-even (bar 0.85); the shipped seasonal-naive default has WAPE 0.294 on the independent series (bar 0.25), and simple smoothing baselines beat it there. The two synthetic sources disagree on whether learned models help; no real-account evidence.
+
+## 4f. seasonal_mean_4 vs seasonal-naive, round 2 (owner chose to re-run the same rule on fresh seeds; pre-registered in `0741261`; run once)
+
+Rules A, B, C and their bars are identical to 4e; seeds are fresh (mock 61-90, independent 141-160) with twice the account cases (60), plus a new
+rule D (interval calibration of the candidate, through `forecast_series(..., default_model="seasonal_mean_4")`).
+
+| Rule | Bar | Result | Verdict |
+|---|---|---|---|
+| A independent (40 cases) | no worse >= 70% and mean gain >= +5% | 80%, +7.5% (WAPE 0.314 -> 0.263) | pass |
+| **B mock account (60 cases)** | no worse >= 70% and mean gain >= +5% | **45%, -9.3%** (WAPE 0.143 -> 0.144) | **fail** |
+| C mock campaign (720 cases) | no worse >= 60% and mean gain >= 0 | 79%, +13.7% (WAPE 0.509 -> 0.431) | pass |
+| D interval coverage (80% nominal, 0.65-0.92) | in band, no negative bound, lower <= point <= upper | independent 0.755, mock account 0.757; all sane | pass |
+
+**Outcome: the default stays seasonal-naive.** Rule B is recorded as a strict known failure (`test_rule_b_mock_account` is `xfail(strict=True)`).
+- Round 1's doubt is gone: with 60 cases the standard error of a share is about 6 points, so 45% against 70% is about four standard errors short.
+- Mixed picture, reported as it is: at account level seasonal_mean_4 has slightly lower **pooled** MAE (407k vs 419k) and RMSE (494k vs 521k) but wins
+  only 45% of individual cases and its mean per-case change is -9.3%: it wins small and loses big. At campaign level and on the independent
+  generator it is clearly better. Its intervals are acceptably calibrated (rule D), so calibration is not the obstacle.
+- Seeds 61-90 and 141-160 are now spent. Any further comparison needs fresh seeds and a new pre-registration. `DEFAULT_MODEL` in
+  `forecasting/service.py` stays `seasonal_naive`; the new `default_model` parameter exists only so a candidate can be tested.
+- Possible next steps (each needs fresh seeds and an owner decision): a different candidate (for example a median of the last 4 same-weekday values
+  to curb the large losses, or a blend of seasonal-naive and seasonal_mean_4), or different defaults per level (campaign vs account), since
+  the evidence favors seasonal_mean_4 at campaign level only.
