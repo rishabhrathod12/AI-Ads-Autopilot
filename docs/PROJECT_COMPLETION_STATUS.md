@@ -1,5 +1,42 @@
 # Project Completion Status
 
+> ## Update 2026-11-15 (the audit below is the 2026-11-13 snapshot; this block supersedes it where they differ)
+> Same rubric as section 3.0 below (40 implemented, 20 tested, 20 integrated, 20 verified in a real environment with gates passing; no component reaches
+> full "verified" because the data is synthetic). Sections whose score changed:
+>
+> | Section | Was | Now | Why (evidence) |
+> |---|---:|---:|---|
+> | 2 Ingestion and jobs | 70 | 78 | `run-jobs` (expire recommendations, refresh forecasts), tenant-isolated, advisory-locked (ADR 0027, migration 0008). Sync is still CLI-only |
+> | 3 Database and migrations | 95 | 97 | migrations 0001-0008 verified on PostgreSQL 16 in CI; restore rehearsed (found and fixed a runbook bug) |
+> | 5 Authentication and roles | 65 | 80 | Auth0 chosen, invitation-only provisioning, `/me`, team routes, frontend sign-in (ADR 0026). **Never run against a real Auth0 tenant** |
+> | 8 Keyword intelligence | 75 | 80 | Insights UI (findings tab) |
+> | 9 Anomaly detection | 80 | 85 | Insights UI (anomalies tab) |
+> | 10 Forecasting | 65 | 75 | Insights UI (create/refresh); default settled by evidence: seasonal_mean_4 failed rule B again on 60 cases, so seasonal-naive stays (ML_EVALUATION 4f) |
+> | 13 RAG | 65 | 75 | retrieval now measured: real embeddings pass recall@3 0.958 / recall@1 0.667; offline embedder fails recall@1 by one question |
+> | 14 LangGraph agents | 70 | 75 | `recommendation_review` specialist (read-only); live agent evals all pass |
+> | 16 Recommendation engine | 75 | 78 | the assistant can explain stored proposals (ADR 0028); still rule-based |
+> | 19 Audit logging | 90 | 92 | admin audit-trail view |
+> | 20 FastAPI backend | 90 | 92 | `/metrics`, analytics result cache (ADR 0029): keyword findings at 20 clients 19 s to 0.41 s |
+> | 21 React frontend | 65 | 80 | sign-in, organization picker, Team panel, Insights (findings, anomalies, forecast, audit); no reports/execution screens |
+> | 22 Observability | 50 | 65 | request and cache metrics; still no tracing, alerting or dashboards |
+> | 23 Testing and QA | 80 | 85 | about 1,000 backend tests incl. DB, 77 frontend, 6 pre-registered live/offline evaluation suites, load test |
+> | 24 CI/CD | 50 | 75 | CI verified green on the latest commits: backend on PostgreSQL 16, frontend, images, audit, secrets |
+> | 25 Docker and deployment | 35 | 55 | images build in CI; Auth0 build args and CSP substitution added and tested; **no `compose up`, no browser sign-in through nginx** |
+>
+> Unchanged: 1 (85), 4 (90), 6 (90), 7 (90), 11 (80), 12 (90), 15 (90), 17 (90), 18 (95), 26 Amazon Ads API (20).
+>
+> **New total: 2,087 / 26 = 80.3% (was 74.6%).** Sections: **13 complete** (>= 85), **12 partial**, **1 pending**. Milestone view unchanged: 4 complete, 6 partial,
+> 0 not started (70%). **Production gates met: still 0 of 10** in the full sense; partly met: green CI (met), monitoring (metrics only), restore (rehearsed once),
+> load test (done once), real sign-in (code only).
+>
+> **Honest limits of the new number.** It rises mostly because UI, auth plumbing, jobs, metrics and CI evidence were added. It does not rise for the things
+> that matter most for "production": no real data, no real Auth0 tenant, ML accuracy gates still failed (forecast, negative-term precision), live LLM evaluations
+> on one sample per question with two recorded failures (golden C3 safety, recommendation group D on the single engine), and the action-refusal guard shown
+> only on wordings its author anticipated (ASSISTANT.md, "Round 3").
+>
+> **Still blocked on you:** Amazon Ads API access and documentation; creating the Auth0 tenant; requests phrased by someone else to test the guard; a decision on the
+> Bid/Budget write tool (ADR 0030, still PROPOSED); a container bring-up on a machine with Docker.
+
 Audit date: 2026-11-13, commit `b321aff`, working tree clean. Read-only audit.
 Method: I read the source, migrations, tests and evaluation result files, and re-ran static checks and the test suites
 that need no database. I did **not** re-run the database-backed tests, the ML evaluations or any live-model evaluation;
