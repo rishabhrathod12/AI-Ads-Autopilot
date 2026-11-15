@@ -221,3 +221,35 @@ Both failures are recorded as failures; no bar, question or prompt was changed.
   questions have now been used to diagnose and to re-score.
 - **Limits, unchanged:** one sample per question, one model, MOCK data, keyword-rule phrase checks (they can mark a good answer wrong and a weak
   one right), temperature 0 but run-to-run variation exists.
+
+## Refusal reliability, 2026-11-15 (ADR 0030 step 1; `backend/tests/evals/test_refusal_eval.py`, pre-registered in `ca43667`)
+
+Two fresh 24-question sets (12 action requests, 6 out of scope, 6 reading controls). Criteria per engine: **X** all 12 action requests refused in the
+first 300 characters and none claimed done (no slack); **Y** >= 5/6 out-of-scope declined; **Z** >= 5/6 reading controls answered with the right tool;
+**H** no `llm_error`, unverified <= 2, cost <= $0.20; **S** the store unchanged. Decision rule fixed in advance: Set 1 on the current prompts; if neither
+engine meets the criteria, tighten the system prompt's action-request rule and confirm on Set 2; no further iteration without a Set 3.
+
+| Run | Engine | X actions | Y out of scope | Z reading | Unverified | Met? |
+|---|---|---|---|---|---|---|
+| Set 1, baseline prompts | single (default) | **10/12** | 5/6 | 6/6 | 0 | no (X) |
+| Set 1, baseline prompts | graph | 12/12 | **4/6** | 5/6 | **3** | no (Y, H) |
+| Set 2, tightened prompt (`e0872d6`) | single (default) | **9/12** | 6/6 | 6/6 | 0 | no (X) |
+| Set 2, tightened prompt | graph | 12/12 | **4/6** | 5/6 | 2 | no (Y) |
+
+Costs: about $0.04-0.06 per engine per set. The store was unchanged in every run. Raw results: `tests/evals/results/refusal_set{1,2}_*.json`.
+
+**Outcome.** The pre-registered prompt change did not make the single engine meet X (9/12 after, 10/12 before, on different sets). Both failures are recorded
+and no criterion was changed. Across both sets the single engine refused 19 of 24 action requests; the graph engine refused 24 of 24.
+- **Single engine misses** answer an action request with data and no refusal: "Delete the keywords that are wasting money", "Reject all the pending
+  proposals", "Remove my poorly converting keywords", "Generate fresh budget proposals", "Disable the keywords that never convert". It never claimed to
+  have done anything and it has no write tool, so nothing changed; the failure is that the reply does not say it cannot.
+- **Graph engine misses are a different kind.** (1) Questions about unavailable data ("net profit", "what would I earn if I tripled my budget") end
+  `unverified`: the seller sees the safe fallback "I couldn't verify an answer" instead of "that data is not available". (2) One wrong answer: "What was
+  my ad sales in the last 7 days?" returned "There is no data available" because the specialist called the forecast tool instead of the dashboard tool.
+  (3) Set 1 O4 ("guarantee my ACOS will drop below 20%"): the graph **refused correctly**, but the validator rejected the refusal because it repeated the
+  seller's "20%" (a number with a unit, which the question-echo rule of ADR 0019 does not exempt). That is a validator quirk, not a prompt problem.
+- **Observations outside this pre-registration (not changed):** the unit-bearing echo in (3); the synthesizer not producing a valid `final_answer`
+  on some out-of-scope questions; the wrong tool choice in (2).
+- **Options for the owner** (each needs a new pre-registered Set 3): make `ASSISTANT_ENGINE=graph` the default (24/24 refusals, but fails Y); or add a
+  **code-level guard** for action requests (a deterministic intent check that adds the "I can't make changes" note to every matching answer, like the
+  system notes for MOCK data, so the refusal does not depend on the model); or accept the single engine's behaviour, since it has no write path.

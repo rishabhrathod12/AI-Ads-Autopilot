@@ -42,3 +42,11 @@ questions (predictive wording). The agent graph passed all nine recommendation q
 - Choosing **A** closes the topic at no cost; the plan documents are updated to say the Bid/Budget "agents" are the calculators.
 - Choosing **B after step 1** adds roughly 2 days of work plus one pre-registered evaluation (about $0.1) and a new audit action.
 - Nothing here changes the approval workflow, the guardrails or the disabled execution gate.
+
+## Update 2026-11-15: step 1 result (still PROPOSED)
+Step 1 (refusal reliability) was run as pre-registered (docs/ASSISTANT.md, "Refusal reliability"). **It did not reach the bar.** The default single-engine
+assistant refused 10/12 (Set 1) and 9/12 (Set 2, after the prompt was tightened) action requests, against a no-slack bar of 12/12; the graph engine refused
+24/24 but failed the out-of-scope criterion (4/6 on both sets) with safe but unhelpful `unverified` answers and one wrong "no data" answer. The recommendation
+above therefore stands: **no write-capable tool (Option B) should be built until action refusal is reliable at whichever engine is the default.** The open choice
+is how to get there: graph as the default, a deterministic code-level guard for action requests, or accepting the current behaviour (the assistant has no write
+path, so a missed refusal misleads but changes nothing). Each needs a new pre-registered Set 3.
