@@ -28,7 +28,10 @@ MODEL_MARGIN = 0.05  # a model must beat seasonal-naive's MAE by at least 5%
 # is still backtested and its scores reported; learned models are opt-in via ``allow_learned=True``.
 LEARNED_MODELS_SELECTABLE = False
 INTERVAL_LEVEL = 0.80
-BASELINE = "seasonal_naive"
+BASELINE = "seasonal_naive"  # the reference every learned model must beat
+# The model used when learned models are not selectable. Kept equal to BASELINE until a
+# pre-registered evaluation says otherwise (ML_EVALUATION.md); ``default_model`` lets one test it.
+DEFAULT_MODEL = BASELINE
 _BASELINE_NAMES = {"naive", "moving_average_7", "seasonal_naive", "seasonal_mean_4"}
 
 
@@ -72,7 +75,11 @@ def _band(errors: FloatArr, level: float) -> tuple[float, float]:
 
 
 def select_model(
-    bt: Backtest, margin: float = MODEL_MARGIN, *, allow_learned: bool = True
+    bt: Backtest,
+    margin: float = MODEL_MARGIN,
+    *,
+    allow_learned: bool = True,
+    default_model: str = DEFAULT_MODEL,
 ) -> tuple[str, bool, str]:
     """(model name, used_baseline, reason)."""
     pooled = {m: bt.pooled(m).mae for m in bt.forecasts}
@@ -105,10 +112,11 @@ def select_model(
         # Default policy (ADR 0013 update): seasonal-naive, regardless of how other baselines or
         # learned models scored. Their backtest scores are still reported as experimental.
         return (
-            BASELINE,
+            default_model,
             True,
-            "default forecast: seasonal-naive (learned models are experimental: not shown to "
-            "beat it on held-out data)",
+            f"default forecast: {default_model.replace('_', '-')} (learned models are "
+            "experimental: "
+            "not shown to beat it on held-out data)",
         )
     best_baseline = min((m for m in pooled if m in _BASELINE_NAMES), key=lambda m: pooled[m])
     return (
@@ -131,6 +139,7 @@ def forecast_series(
     level: float = INTERVAL_LEVEL,
     forecasters: list[Forecaster] | None = None,
     allow_learned: bool | None = None,
+    default_model: str | None = None,
 ) -> SeriesForecast:
     """``values``: consecutive daily MATURE values ending on ``end_date`` (missing days as 0)."""
     y = np.asarray(values, dtype=float)
@@ -152,6 +161,7 @@ def forecast_series(
     name, used_baseline, reason = select_model(
         bt,
         allow_learned=LEARNED_MODELS_SELECTABLE if allow_learned is None else allow_learned,
+        default_model=default_model or DEFAULT_MODEL,
     )
 
     # Intervals from out-of-sample relative errors of the chosen model.
