@@ -56,6 +56,7 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
 "tests/evals/test_forecast_eval_v2.py" = ["E501"]  # wide pre-registration docstring
 "tests/evals/test_seasonal_mean_comparison_v2.py" = ["E501"]  # wide pre-registration docstring
 "tests/evals/test_recommendations_eval.py" = ["E501"]  # wide pre-registration docstring, case table
+"tests/evals/test_refusal_eval.py" = ["E501"]  # wide pre-registration docstring, case table
 [tool.mypy]
 strict = true
 plugins = ["pydantic.mypy"]
