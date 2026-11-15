@@ -1,0 +1,180 @@
+{
+ "embedder": "hashing",
+ "recall_at_3": 0.833,
+ "recall_at_1": 0.542,
+ "direct_recall_at_3": 1.0,
+ "mrr": 0.674,
+ "answerable_top1_score_min": 0.094,
+ "unanswerable_top1_score_max": 0.262,
+ "a_cutoff_separates_them": false,
+ "cases": [
+  {
+   "q": "What does ACOS mean?",
+   "direct": true,
+   "rank": 2,
+   "top": "PPC glossary > Structure and budget > Target ACOS",
+   "score": 0.289
+  },
+  {
+   "q": "How is ROAS calculated?",
+   "direct": true,
+   "rank": 1,
+   "top": "PPC glossary > Core metrics > ROAS (return on ad spend)",
+   "score": 0.236
+  },
+  {
+   "q": "What is break-even ACOS?",
+   "direct": true,
+   "rank": 1,
+   "top": "PPC glossary > Core metrics > Break-even ACOS",
+   "score": 0.613
+  },
+  {
+   "q": "What is CTR?",
+   "direct": true,
+   "rank": 1,
+   "top": "PPC glossary > Core metrics > CTR (click-through rate)",
+   "score": 0.466
+  },
+  {
+   "q": "What does CPC stand for and how is it computed?",
+   "direct": true,
+   "rank": 1,
+   "top": "PPC glossary > Core metrics > CPC (cost per click)",
+   "score": 0.235
+  },
+  {
+   "q": "Define conversion rate",
+   "direct": true,
+   "rank": 1,
+   "top": "PPC glossary > Core metrics > Conversion rate",
+   "score": 0.345
+  },
+  {
+   "q": "What are broad, phrase and exact match types?",
+   "direct": true,
+   "rank": 1,
+   "top": "PPC glossary > Targeting > Keyword and match types",
+   "score": 0.493
+  },
+  {
+   "q": "What is a search term versus a keyword?",
+   "direct": true,
+   "rank": 1,
+   "top": "PPC glossary > Targeting > Search term",
+   "score": 0.603
+  },
+  {
+   "q": "How much do I pay on average each time a shopper clicks my ad?",
+   "direct": false,
+   "rank": null,
+   "top": "PPC glossary > Core metrics > Impressions, clicks, orders and units",
+   "score": 0.243
+  },
+  {
+   "q": "What fraction of shoppers who click end up buying?",
+   "direct": false,
+   "rank": null,
+   "top": "PPC glossary > Data and measurement > Attribution window",
+   "score": 0.163
+  },
+  {
+   "q": "At what margin do my ads stop making money?",
+   "direct": false,
+   "rank": 1,
+   "top": "PPC glossary > Core metrics > Break-even ACOS",
+   "score": 0.146
+  },
+  {
+   "q": "What is it called when a campaign keeps running out of daily spend?",
+   "direct": false,
+   "rank": 3,
+   "top": "PPC optimization guidelines > Bids and budgets > Budgets",
+   "score": 0.228
+  },
+  {
+   "q": "Why do my recent days show weak sales numbers?",
+   "direct": false,
+   "rank": 2,
+   "top": "PPC glossary > Data and measurement > Attributed sales versus total sales",
+   "score": 0.217
+  },
+  {
+   "q": "Does the ad-attributed figure include organic purchases?",
+   "direct": false,
+   "rank": 1,
+   "top": "PPC glossary > Data and measurement > Attributed sales versus total sales",
+   "score": 0.38
+  },
+  {
+   "q": "When should I stop an ad from appearing for a certain shopper query?",
+   "direct": false,
+   "rank": null,
+   "top": "PPC glossary > Core metrics > Impressions, clicks, orders and units",
+   "score": 0.209
+  },
+  {
+   "q": "How many clicks do I need before judging a keyword?",
+   "direct": false,
+   "rank": 2,
+   "top": "PPC glossary > Targeting > Negative keyword",
+   "score": 0.262
+  },
+  {
+   "q": "Should I change bids by a lot at once?",
+   "direct": false,
+   "rank": 1,
+   "top": "PPC optimization guidelines > Bids and budgets > Moving bids",
+   "score": 0.267
+  },
+  {
+   "q": "When is it fine to give a campaign more daily money?",
+   "direct": false,
+   "rank": 2,
+   "top": "PPC glossary > Structure and budget > Campaign, ad group and budget",
+   "score": 0.27
+  },
+  {
+   "q": "What should I do when my cost of sales jumps?",
+   "direct": false,
+   "rank": 3,
+   "top": "PPC glossary > Core metrics > ACOS (advertising cost of sales)",
+   "score": 0.339
+  },
+  {
+   "q": "Is one strange day worth reacting to?",
+   "direct": false,
+   "rank": null,
+   "top": "PPC optimization guidelines > Bids and budgets > Opportunities",
+   "score": 0.166
+  },
+  {
+   "q": "Can this tool tell me my profit?",
+   "direct": false,
+   "rank": 2,
+   "top": "PPC glossary > Core metrics > Break-even ACOS",
+   "score": 0.094
+  },
+  {
+   "q": "Are the numbers in the demo real?",
+   "direct": false,
+   "rank": 1,
+   "top": "PPC glossary > Data and measurement > Mock data",
+   "score": 0.182
+  },
+  {
+   "q": "Which period lengths should I compare for fairness?",
+   "direct": false,
+   "rank": 1,
+   "top": "PPC optimization guidelines > Judging performance > Compare like with like",
+   "score": 0.108
+  },
+  {
+   "q": "A search term converts but is not targeted exactly yet: what then?",
+   "direct": false,
+   "rank": 1,
+   "top": "PPC optimization guidelines > Bids and budgets > Opportunities",
+   "score": 0.368
+  }
+ ]
+}

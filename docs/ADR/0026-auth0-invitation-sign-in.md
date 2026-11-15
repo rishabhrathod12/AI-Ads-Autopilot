@@ -45,9 +45,11 @@ and how the frontend signs in. Without them the shipped frontend (development he
 - **Not done / open:** an Auth0 tenant, application and API do not exist yet; the Action is untested; removing or changing a
   member's role, resending or revoking an invitation, listing pending invitations across organizations, rate limiting of
   failed sign-ins, token revocation beyond expiry, and email delivery (the admin tells the person; no email is sent).
-- **Container deployment:** `frontend/nginx.conf` sets `connect-src 'self'`, which blocks the SDK's calls to the Auth0 domain,
-  and the frontend `Dockerfile` has no build arguments for `VITE_AUTH0_*`. Both must change, and be built and tested with
-  Docker, before the container can sign anyone in. Not changed here because Docker is not available to verify it.
+- **Container deployment (updated 2026-11-13):** the frontend `Dockerfile` takes `VITE_AUTH0_DOMAIN/CLIENT_ID/AUDIENCE` build
+  arguments (passed by `docker-compose.prod.yml`) and substitutes `https://<domain>` into the nginx CSP `connect-src` and
+  `frame-src` (silent renewal uses an iframe). The domain must be a plain hostname or the build fails. The substitution logic was
+  tested in a shell and CI builds the image without arguments; **a build with real values and a browser sign-in through nginx have not
+  been run.**
 - An invited user who is also invited to a second organization is the same `users` row; one login covers both organizations.
 - Email takeover relies on the provider's email verification. If a provider ever marks unverified emails as verified, an
   attacker who registers an invited address could claim the invitation.

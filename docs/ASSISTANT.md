@@ -166,3 +166,22 @@ The assistant can now list and explain stored recommendations through the read-o
 `recommendation_review` specialist). The system prompt and supervisor prompt changed. **The golden, held-out and agent evaluations above
 were run before this change and have not been re-run**, so they do not describe the current prompts. Re-running them (pre-registered,
 live model, about $0.2) is open.
+
+## Retrieval quality (2026-11-13; `backend/tests/evals/test_retrieval_eval.py`, results in `tests/evals/results/retrieval_hashing.json`)
+
+Until now retrieval quality was assumed, not measured. A pre-registered evaluation scores whether the right passage comes back for 24
+answerable questions (8 using the glossary's own term, 16 paraphrased) and 6 unanswerable ones, against the two shipped documents (30 chunks).
+Criteria fixed before the run: recall@3 >= 0.80 (A1), recall@1 >= 0.55 (A2), recall@3 on the direct-term questions >= 0.90 (A3).
+
+| Embedder | recall@3 | recall@1 | direct recall@3 | MRR | Result |
+|---|---|---|---|---|---|
+| Offline hashing (bag of words, dev/test only) | 0.833 | **0.542** | 1.0 | 0.674 | A1 pass, **A2 FAIL by one question**, A3 pass |
+| Real embedding model (`text-embedding-3-small`) | not run | | | | needs `RUN_LLM_EVAL=1` and an API key; the test exists and is skipped otherwise |
+
+- **Recorded as a strict known failure; the bar was not changed.** Misses are paraphrases that share no words with the answer, which a
+  bag of words cannot match, plus "What does ACOS mean?" (the Target ACOS chunk outranked the definition; the right chunk was second).
+- **No score cut-off is justified (for this embedder).** The weakest answerable top-1 score is 0.094 and the strongest unanswerable one is 0.262,
+  so no single minimum-score filter separates them. None was added. Whether one helps with real embeddings is unmeasured.
+- **What this does and does not say:** it describes the offline stand-in only. The real model's retrieval quality, the answer-generation step
+  and anything with more than two short documents remain unevaluated. More reference documents were not added: the content is
+  domain guidance that should come from the owner, not be invented.

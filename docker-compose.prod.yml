@@ -97,7 +97,13 @@ services:
     cpus: 2
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      # Public sign-in identifiers, baked into the bundle and the nginx CSP (docs/AUTH_SETUP.md).
+      args:
+        VITE_AUTH0_DOMAIN: ${VITE_AUTH0_DOMAIN:-}
+        VITE_AUTH0_CLIENT_ID: ${VITE_AUTH0_CLIENT_ID:-}
+        VITE_AUTH0_AUDIENCE: ${VITE_AUTH0_AUDIENCE:-}
     <<: *hardening
     depends_on:
       backend: {condition: service_healthy}

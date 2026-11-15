@@ -10,9 +10,11 @@ from typing import Any
 import structlog
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import PlainTextResponse
 from sqlalchemy import text
 
 from app.api.errors import problem, register_error_handlers
+from app.api.metrics import Metrics
 from app.api.routers.analytics import router as analytics_router
 from app.api.routers.assistant import router as assistant_router
 from app.api.routers.members import router as members_router
@@ -97,6 +99,7 @@ def create_app(
         openapi_url=None if production else "/openapi.json",
     )
     app.state.settings = settings
+    app.state.metrics = Metrics()
     # With auth configured, bearer JWTs are required and the dev header is ignored (api/tenancy.py).
     app.state.token_verifier = (
         JwtVerifier(
@@ -135,7 +138,10 @@ def create_app(
             response.headers["X-Request-ID"] = request_id
             return response
         finally:
-            _access_log(request, status, (time.perf_counter() - started) * 1000)
+            elapsed = time.perf_counter() - started
+            _access_log(request, status, elapsed * 1000)
+            route = getattr(request.scope.get("route"), "path", "unmatched")
+            app.state.metrics.observe(request.method, route, status, elapsed)
 
     register_error_handlers(app)
     app.include_router(analytics_router)
@@ -151,6 +157,14 @@ def create_app(
             "data_source": "MOCK" if settings.ads_provider == "mock" else "AMAZON_ADS_API",
             "execution_enabled": settings.ad_execution_enabled,
         }
+
+    @app.get("/metrics", include_in_schema=False)
+    async def metrics() -> PlainTextResponse:
+        """Request counts and latency for a scraper. Not reachable through the nginx proxy, which
+        forwards only ``/api/``; keep it on the internal network."""
+        return PlainTextResponse(
+            app.state.metrics.render(), media_type="text/plain; version=0.0.4; charset=utf-8"
+        )
 
     @app.get("/ready", response_model=None)
     async def ready(request: Request) -> dict[str, str] | Response:

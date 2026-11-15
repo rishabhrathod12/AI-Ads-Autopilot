@@ -67,3 +67,31 @@ async def test_rls_bypassing_roles_are_refused(
     else:
         await assert_rls_enforced(object(), "adpilot_app")  # type: ignore[arg-type]
     assert calls == ["adpilot_app"]  # checked as the role the app really uses per request
+
+
+# ---- container sign-in wiring (ADR 0026): text checks, since Docker is not available here ----
+def _repo_file(*parts: str) -> str:
+    from pathlib import Path
+
+    return Path(__file__).resolve().parents[3].joinpath(*parts).read_text(encoding="utf-8")
+
+
+def test_every_nginx_csp_allows_the_auth_provider_through_the_build_placeholder() -> None:
+    conf = _repo_file("frontend", "nginx.conf")
+    csp_lines = [ln for ln in conf.splitlines() if "Content-Security-Policy" in ln]
+    assert len(csp_lines) == 2  # server level and the "/" location (which drops server headers)
+    for line in csp_lines:
+        assert "connect-src 'self' __AUTH0_ORIGIN__;" in line
+        assert "frame-src 'self' __AUTH0_ORIGIN__;" in line  # silent token renewal uses an iframe
+        assert "script-src 'self';" in line and "unsafe-eval" not in line  # not loosened
+
+
+def test_dockerfile_substitutes_only_a_plain_hostname_and_fails_on_leftovers() -> None:
+    dockerfile = _repo_file("frontend", "Dockerfile")
+    assert "[!A-Za-z0-9.-]" in dockerfile  # anything else fails the build
+    assert "! grep -q" in dockerfile and "__AUTH0_ORIGIN__" in dockerfile
+    for name in ("VITE_AUTH0_DOMAIN", "VITE_AUTH0_CLIENT_ID", "VITE_AUTH0_AUDIENCE"):
+        assert f"ARG {name}=" in dockerfile
+    compose = _repo_file("docker-compose.prod.yml")
+    for name in ("VITE_AUTH0_DOMAIN", "VITE_AUTH0_CLIENT_ID", "VITE_AUTH0_AUDIENCE"):
+        assert f"{name}: ${{{name}:-}}" in compose

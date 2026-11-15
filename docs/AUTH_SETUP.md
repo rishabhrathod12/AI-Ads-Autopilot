@@ -55,10 +55,16 @@ cd backend
 It prints the organization id. Sign in with that email; the first login links you. After that, owners and admins invite
 people from the **Team** panel (or `POST /api/v1/members`). Tell the person to sign in with the invited address.
 
+## 7. Container build
+`docker-compose.prod.yml` passes `VITE_AUTH0_DOMAIN`, `VITE_AUTH0_CLIENT_ID` and `VITE_AUTH0_AUDIENCE` to the frontend image build, which
+bakes them into the bundle and adds `https://<domain>` to the nginx Content-Security-Policy. Put the three values in `.env.production`
+(see `.env.production.example`) and rebuild: `docker compose --env-file .env.production -f docker-compose.prod.yml build frontend`.
+**Not yet run with real values.**
+
 ## Troubleshooting
 | Symptom | Likely cause |
 |---|---|
 | Signed in but "No access yet" | the email was not invited, the token has no email claim (step 3), or `AUTH_EMAIL_*` names do not match the Action's claim names |
 | 401 on every call | issuer without the trailing slash, wrong audience, or the frontend is not requesting the API audience |
 | 403 "Not a member" | invited to a different organization, or the invitation was already linked to another login |
-| Login works locally but not in the Docker image | nginx CSP `connect-src` and the missing `VITE_AUTH0_*` build arguments (see ADR 0026) |
+| Login works locally but not in the Docker image | the image was built without `VITE_AUTH0_*` (they are build arguments, set them in `.env.production` and rebuild `frontend`), or the CSP blocks another origin: check the browser console for "Refused to connect/frame" |
