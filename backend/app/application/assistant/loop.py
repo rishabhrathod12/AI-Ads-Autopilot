@@ -17,6 +17,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from app.application.assistant.action_guard import ACTION_FLAG, ACTION_NOTICE, is_action_request
 from app.application.assistant.evidence import Evidence, ToolError
 from app.application.assistant.faithfulness import (
     Claim,
@@ -221,6 +222,13 @@ def finish_run(
         if status in (Status.ANSWERED, Status.PARTIAL)
         else "\n".join([FALLBACK_TEXT[status], *[f"Note: {n}" for n in notes]])
     )
+    # A request to change something is always answered with the refusal first, written by code, so
+    # it does not depend on what the model said (see action_guard.py). Same for every status and
+    # engine.
+    is_request = is_action_request(question)
+    if is_request:
+        text = f"{ACTION_NOTICE}\n{text}"
+    flags = {f for e in evidence for f in e.flags} | ({ACTION_FLAG} if is_request else set())
     return AssistantRun(
         status=status,
         question=question,
@@ -231,7 +239,7 @@ def finish_run(
         answer_text=text,
         evidence=evidence,
         cited=frozenset(i for c in claims for i in c.evidence_ids),
-        flags=tuple(sorted({f for e in evidence for f in e.flags})),
+        flags=tuple(sorted(flags)),
         steps=tuple(state.steps),
         violations=violations,
         dropped_claims=dropped,
