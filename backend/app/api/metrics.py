@@ -28,6 +28,7 @@ class Metrics:
         self._buckets: dict[str, list[int]] = {}
         self._sum: dict[str, float] = defaultdict(float)
         self._count: dict[str, int] = defaultdict(int)
+        self._cache: dict[tuple[str, str], int] = defaultdict(int)
 
     def observe(self, method: str, route: str, status: int, seconds: float) -> None:
         method = method if method in _METHODS else "OTHER"
@@ -39,6 +40,11 @@ class Metrics:
                     buckets[i] += 1
             self._sum[route] += seconds
             self._count[route] += 1
+
+    def observe_cache(self, route: str, result: str) -> None:
+        """``result`` is "hit", "miss" or "shared"; the route is always a template we defined."""
+        with self._lock:
+            self._cache[(route, result)] += 1
 
     def render(self) -> str:
         req, dur = "adpilot_http_requests_total", "adpilot_http_request_duration_seconds"
@@ -61,4 +67,12 @@ class Metrics:
                 lines.append(f'{dur}_bucket{{route="{r}",le="+Inf"}} {self._count[route]}')
                 lines.append(f'{dur}_sum{{route="{r}"}} {self._sum[route]:.6f}')
                 lines.append(f'{dur}_count{{route="{r}"}} {self._count[route]}')
+        cache = "adpilot_analytics_cache_requests_total"
+        lines += [
+            f"# HELP {cache} Analytics cache lookups by route and result.",
+            f"# TYPE {cache} counter",
+        ]
+        with self._lock:
+            for (route, result), n in sorted(self._cache.items()):
+                lines.append(f'{cache}{{route="{_escape(route)}",result="{result}"}} {n}')
         return "\n".join(lines) + "\n"

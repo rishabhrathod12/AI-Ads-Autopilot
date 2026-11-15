@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 from sqlalchemy import text
 
+from app.api.cache import ResultCache
 from app.api.errors import problem, register_error_handlers
 from app.api.metrics import Metrics
 from app.api.routers.analytics import router as analytics_router
@@ -100,6 +101,10 @@ def create_app(
     )
     app.state.settings = settings
     app.state.metrics = Metrics()
+    app.state.result_cache = ResultCache(
+        max_entries=settings.analytics_cache_max_entries,
+        ttl_seconds=settings.analytics_cache_ttl_seconds,
+    )
     # With auth configured, bearer JWTs are required and the dev header is ignored (api/tenancy.py).
     app.state.token_verifier = (
         JwtVerifier(

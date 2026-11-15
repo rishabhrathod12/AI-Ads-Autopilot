@@ -62,6 +62,11 @@ class FakeReader:
     async def freshness(self) -> Freshness:
         return Freshness(self.data.dates[-1], self.data.dates[self.data.mature_through])
 
+    version = "fake-1"  # tests change it to simulate new data arriving
+
+    async def data_version(self) -> str:
+        return self.version
+
     async def provenance(self, period: DateRange) -> Provenance:
         return Provenance(frozenset({DataSource.MOCK}), self._now)
 

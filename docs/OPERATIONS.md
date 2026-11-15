@@ -80,11 +80,37 @@ shape: no TLS, no nginx, client and database on the same CPU, a single account, 
   are bound by the database, not by Python: one aggregate over `performance_daily` for search terms is a parallel sequential scan of all rows,
   about 390 ms (`EXPLAIN ANALYZE`), and findings runs several. A covering index on `(organization_id, entity_type, date)` was tried on a
   scratch copy: **only 19% faster (314 ms) for 51 MB**, so it is not recommended.
-- **What would actually help (not done, needs a decision):** a short-lived cache of analytics results keyed by organization, route,
-  parameters and the latest data date (data only changes on a sync), or pre-aggregated period totals. Both trade freshness or storage for
-  speed. Until then, a handful of simultaneous users on the keyword routes will wait seconds.
+- **Fix applied 2026-11-15: an analytics result cache (ADR 0029), measured below.** Until then a handful of simultaneous users on the keyword
+  routes waited seconds.
 - **Not measured:** other hardware, many organizations at once, the assistant and forecast creation under load, a separate database server,
   PostgreSQL 16, long runs (memory growth), and the connection-pool limit (default 5 plus 10 overflow per process).
+
+## Analytics result cache (ADR 0029, 2026-11-15)
+`app/api/cache.py`: an in-process cache for the eight read-only analytics routes (dashboard summary and trends, campaigns, campaign changes, keywords,
+search terms, keyword findings, anomalies). Settings: `ANALYTICS_CACHE_TTL_SECONDS` (default 300) and `ANALYTICS_CACHE_MAX_ENTRIES` (default 256);
+either set to 0 turns it off. Counters: `adpilot_analytics_cache_requests_total{route,result="hit|miss|shared"}` on `/metrics`.
+
+- **It cannot serve stale data.** Every key carries the organization and a *data version* (`PerformanceReader.data_version`: count, newest start, rows
+  and newest ingestion time of the organization's ingestion runs; every sync writes one), so new data changes the key at once. The TTL is only a
+  second safety net. Tested against PostgreSQL: a re-sync of the same days changes the token; another organization's sync does not.
+- **It cannot cross tenants.** The organization id is in every key and the cache is reached only after authentication, the role check and the tenant
+  session. Tested: organization B never receives organization A's entry.
+- **Concurrent identical requests share one computation**; if the request doing the work fails or is cancelled, the others compute for themselves.
+  Errors are never cached; callers receive copies.
+
+Measured on the same seeded database and load script as above (20 clients, identical requests, the best case for a cache):
+
+| | Before | After |
+|---|---|---|
+| keyword findings p50 / throughput at 20 clients | 19 s / 1.0 req/s | **0.41 s / 38 req/s** |
+| top keywords p50 at 20 clients | 7.4 s | 0.31 s |
+| mixed traffic, 20 clients, 80 requests | 29.7 s wall, 2.7 req/s | **1.4 s wall, 55.8 req/s** |
+| errors | 0 | 0 |
+
+**What it does not fix:** the first request for a given set of parameters still pays the full cost (about 1.5-2.5 s here, visible as the single-client
+p95); requests with many different date ranges or sort orders each miss once; it is per process, so a second backend instance would have its own
+cache and needs no coordination only because the data version is read from the database every time; each request still runs one cheap query for
+that version; memory is bounded by 256 entries. The assistant's tools and forecast creation are not cached. This was one machine, one account.
 
 ## Routine tasks
 | Task | How |

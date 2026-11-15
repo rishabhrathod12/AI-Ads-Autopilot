@@ -62,6 +62,10 @@ class Settings(BaseSettings):
     # JSON {"<key id>": "<base64 of 32 random bytes>"}; refresh tokens use the active key.
     token_encryption_keys: SecretStr | None = None
     token_encryption_active_kid: str = ""
+    # In-process cache of read-only analytics responses (docs/OPERATIONS.md). Keys carry the data
+    # version, so it never serves stale data; 0 for either value disables it.
+    analytics_cache_ttl_seconds: float = 300.0
+    analytics_cache_max_entries: int = 256
     mock_seed: int = 42
     mock_history_days: int = 120
     log_level: str = "INFO"

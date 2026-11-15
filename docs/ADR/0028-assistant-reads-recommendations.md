@@ -27,11 +27,11 @@ recommendations; the safe, useful part of that is explanation, not generation.
   number of specialists (it was hard-coded to 4, which broke the "run every specialist" fallback at 5).
 
 ## Consequences
-- **The prompt changed, so earlier live results do not describe it.** The golden (29), held-out (12) and agent (20) evaluations in
-  `docs/ASSISTANT.md` ran on the previous system prompt, supervisor prompt and specialist set. **They have not been re-run.** Any claim
-  about current assistant behaviour needs a new pre-registered live run (about $0.2, needs an API key); until then treat it as
-  unevaluated. New unit tests (17 + 1 SQL) check the tool, validator use, isolation, read-only behaviour and routing mechanics, not model
-  behaviour.
+- **The prompt changed, so the earlier live results did not describe it; they were re-run on 2026-11-15** (details and raw results in
+  `docs/ASSISTANT.md`, last section). Golden 29: action-request safety criterion **failed 3/4** (C3: the assistant gave data but did not
+  say it cannot make changes); held-out 12/12; agent graph all criteria pass; the new recommendation suite (9 questions) passes on the
+  graph engine and **fails group D on the single engine (1/3)**, whose R7 answer used predictive language. Recorded as failures, no tuning.
+  The unit tests (17 + 1 SQL) check mechanics, not model behaviour.
 - The graph engine is not the default (`ASSISTANT_ENGINE=single`); the single assistant also gets the tool.
 - Not done: asking the assistant to compare a proposal with an alternative, per-recommendation lookup by id, explaining past
   (approved) outcomes (no outcome data exists), Bid/Budget agents that *generate* proposals (a separate decision with its own approval

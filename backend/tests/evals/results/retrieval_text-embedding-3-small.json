@@ -1,0 +1,180 @@
+{
+ "embedder": "text-embedding-3-small",
+ "recall_at_3": 0.958,
+ "recall_at_1": 0.667,
+ "direct_recall_at_3": 1.0,
+ "mrr": 0.792,
+ "answerable_top1_score_min": 0.365,
+ "unanswerable_top1_score_max": 0.288,
+ "a_cutoff_separates_them": true,
+ "cases": [
+  {
+   "q": "What does ACOS mean?",
+   "direct": true,
+   "rank": 1,
+   "top": "PPC glossary > Core metrics > ACOS (advertising cost of sales)",
+   "score": 0.636
+  },
+  {
+   "q": "How is ROAS calculated?",
+   "direct": true,
+   "rank": 1,
+   "top": "PPC glossary > Core metrics > ROAS (return on ad spend)",
+   "score": 0.733
+  },
+  {
+   "q": "What is break-even ACOS?",
+   "direct": true,
+   "rank": 1,
+   "top": "PPC glossary > Core metrics > Break-even ACOS",
+   "score": 0.802
+  },
+  {
+   "q": "What is CTR?",
+   "direct": true,
+   "rank": 1,
+   "top": "PPC glossary > Core metrics > CTR (click-through rate)",
+   "score": 0.686
+  },
+  {
+   "q": "What does CPC stand for and how is it computed?",
+   "direct": true,
+   "rank": 1,
+   "top": "PPC glossary > Core metrics > CPC (cost per click)",
+   "score": 0.692
+  },
+  {
+   "q": "Define conversion rate",
+   "direct": true,
+   "rank": 1,
+   "top": "PPC glossary > Core metrics > Conversion rate",
+   "score": 0.651
+  },
+  {
+   "q": "What are broad, phrase and exact match types?",
+   "direct": true,
+   "rank": 1,
+   "top": "PPC glossary > Targeting > Keyword and match types",
+   "score": 0.666
+  },
+  {
+   "q": "What is a search term versus a keyword?",
+   "direct": true,
+   "rank": 1,
+   "top": "PPC glossary > Targeting > Search term",
+   "score": 0.661
+  },
+  {
+   "q": "How much do I pay on average each time a shopper clicks my ad?",
+   "direct": false,
+   "rank": 3,
+   "top": "PPC optimization guidelines > Waste and negatives > Spend without orders",
+   "score": 0.492
+  },
+  {
+   "q": "What fraction of shoppers who click end up buying?",
+   "direct": false,
+   "rank": null,
+   "top": "PPC optimization guidelines > Waste and negatives > Spend without orders",
+   "score": 0.507
+  },
+  {
+   "q": "At what margin do my ads stop making money?",
+   "direct": false,
+   "rank": 3,
+   "top": "PPC glossary > Data and measurement > Attribution window",
+   "score": 0.473
+  },
+  {
+   "q": "What is it called when a campaign keeps running out of daily spend?",
+   "direct": false,
+   "rank": 2,
+   "top": "PPC glossary > Structure and budget > Campaign, ad group and budget",
+   "score": 0.616
+  },
+  {
+   "q": "Why do my recent days show weak sales numbers?",
+   "direct": false,
+   "rank": 3,
+   "top": "PPC optimization guidelines > Anomalies > Sustained shifts",
+   "score": 0.492
+  },
+  {
+   "q": "Does the ad-attributed figure include organic purchases?",
+   "direct": false,
+   "rank": 1,
+   "top": "PPC glossary > Data and measurement > Attributed sales versus total sales",
+   "score": 0.677
+  },
+  {
+   "q": "When should I stop an ad from appearing for a certain shopper query?",
+   "direct": false,
+   "rank": 1,
+   "top": "PPC glossary > Targeting > Negative keyword",
+   "score": 0.502
+  },
+  {
+   "q": "How many clicks do I need before judging a keyword?",
+   "direct": false,
+   "rank": 1,
+   "top": "PPC optimization guidelines > Judging performance > Wait for enough data",
+   "score": 0.679
+  },
+  {
+   "q": "Should I change bids by a lot at once?",
+   "direct": false,
+   "rank": 1,
+   "top": "PPC optimization guidelines > Bids and budgets > Moving bids",
+   "score": 0.599
+  },
+  {
+   "q": "When is it fine to give a campaign more daily money?",
+   "direct": false,
+   "rank": 1,
+   "top": "PPC optimization guidelines > Bids and budgets > Budgets",
+   "score": 0.565
+  },
+  {
+   "q": "What should I do when my cost of sales jumps?",
+   "direct": false,
+   "rank": 2,
+   "top": "PPC optimization guidelines > Anomalies > Sustained shifts",
+   "score": 0.463
+  },
+  {
+   "q": "Is one strange day worth reacting to?",
+   "direct": false,
+   "rank": 1,
+   "top": "PPC optimization guidelines > Anomalies > Sustained shifts",
+   "score": 0.384
+  },
+  {
+   "q": "Can this tool tell me my profit?",
+   "direct": false,
+   "rank": 2,
+   "top": "PPC optimization guidelines > Judging performance > Find which factor moved",
+   "score": 0.365
+  },
+  {
+   "q": "Are the numbers in the demo real?",
+   "direct": false,
+   "rank": 1,
+   "top": "PPC glossary > Data and measurement > Mock data",
+   "score": 0.44
+  },
+  {
+   "q": "Which period lengths should I compare for fairness?",
+   "direct": false,
+   "rank": 1,
+   "top": "PPC optimization guidelines > Judging performance > Compare like with like",
+   "score": 0.497
+  },
+  {
+   "q": "A search term converts but is not targeted exactly yet: what then?",
+   "direct": false,
+   "rank": 2,
+   "top": "PPC glossary > Targeting > Search term",
+   "score": 0.622
+  }
+ ]
+}

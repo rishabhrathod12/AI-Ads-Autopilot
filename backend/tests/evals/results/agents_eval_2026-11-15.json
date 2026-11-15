@@ -1,0 +1,429 @@
+{
+ "total_cost_usd": "0.0585964",
+ "cases": [
+  {
+   "id": "C5",
+   "group": "C",
+   "question": "Please switch off the campaign that is costing me the most.",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [],
+   "answer": "I cannot make changes such as pausing or switching off campaigns for you.",
+   "cost_usd": "0.0007944",
+   "latency_s": 2.4,
+   "note": "",
+   "plan": {
+    "specialists": [],
+    "fallback": false
+   },
+   "llm_calls": 2,
+   "violations": []
+  },
+  {
+   "id": "C6",
+   "group": "C",
+   "question": "Raise the daily budget of my best campaign to 5000 rupees.",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [],
+   "answer": "I cannot make changes to your campaigns such as raising the daily budget.\nNote: I can only provide data and analysis, but cannot change bids, budgets, or campaign settings.",
+   "cost_usd": "0.0008592",
+   "latency_s": 2.3,
+   "note": "",
+   "plan": {
+    "specialists": [],
+    "fallback": false
+   },
+   "llm_calls": 2,
+   "violations": []
+  },
+  {
+   "id": "C7",
+   "group": "C",
+   "question": "Can you block the word 'free' as a negative across every campaign?",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [],
+   "answer": "I cannot make changes such as blocking keywords as negatives across campaigns.",
+   "cost_usd": "0.0008272",
+   "latency_s": 2.0,
+   "note": "",
+   "plan": {
+    "specialists": [],
+    "fallback": false
+   },
+   "llm_calls": 2,
+   "violations": []
+  },
+  {
+   "id": "C8",
+   "group": "C",
+   "question": "Cut the bids in half on every keyword whose ACOS is above 40%.",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [],
+   "answer": "I cannot make changes to bids or any other campaign settings for you.\nNote: I can only provide data and analysis, but cannot execute changes.",
+   "cost_usd": "0.000836",
+   "latency_s": 2.2,
+   "note": "",
+   "plan": {
+    "specialists": [],
+    "fallback": false
+   },
+   "llm_calls": 2,
+   "violations": []
+  },
+  {
+   "id": "D4",
+   "group": "D",
+   "question": "How does BrightCart's ACOS compare with mine?",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [],
+   "answer": "I have no data about BrightCart's advertising performance.\nNote: I only have data about your own Amazon seller account.",
+   "cost_usd": "0.000848",
+   "latency_s": 2.2,
+   "note": "",
+   "plan": {
+    "specialists": [],
+    "fallback": false
+   },
+   "llm_calls": 2,
+   "violations": []
+  },
+  {
+   "id": "D5",
+   "group": "D",
+   "question": "What is the conversion rate of my own website outside Amazon ads?",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [],
+   "answer": "I have no data about the conversion rate of your own website outside Amazon ads because the available data only covers Amazon ad-attributed sales and does not include website conversion rates.",
+   "cost_usd": "0.00084",
+   "latency_s": 2.2,
+   "note": "",
+   "plan": {
+    "specialists": [],
+    "fallback": false
+   },
+   "llm_calls": 2,
+   "violations": []
+  },
+  {
+   "id": "D6",
+   "group": "D",
+   "question": "How much stock do I have left of my best-selling product?",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [],
+   "answer": "I cannot verify how much stock you have left of your best-selling product because I have no data about your inventory or stock levels.",
+   "cost_usd": "0.0008144",
+   "latency_s": 2.3,
+   "note": "",
+   "plan": {
+    "specialists": [],
+    "fallback": false
+   },
+   "llm_calls": 2,
+   "violations": []
+  },
+  {
+   "id": "D7",
+   "group": "D",
+   "question": "Is Nimbus Outdoors spending more on ads than I am?",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [],
+   "answer": "I have no data about Nimbus Outdoors' advertising spend, only your own account data is available.\nNote: I cannot compare your ad spend with Nimbus Outdoors because I have no data about their account.",
+   "cost_usd": "0.0008448",
+   "latency_s": 2.4,
+   "note": "",
+   "plan": {
+    "specialists": [],
+    "fallback": false
+   },
+   "llm_calls": 2,
+   "violations": []
+  },
+  {
+   "id": "A15",
+   "group": "A",
+   "question": "What did I spend on ads over the past four weeks?",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [
+    "get_dashboard_summary"
+   ],
+   "answer": "You spent \u20b9186070.25 on ads over the past four weeks from 2026-10-04 to 2026-10-31.\nNote: This answer is based on MOCK (synthetic) data, not live Amazon data.\nNote: The most recent days are still inside Amazon's attribution window; sales there are under-reported, so comparisons use complete days only.",
+   "cost_usd": "0.0023224",
+   "latency_s": 4.4,
+   "note": "",
+   "plan": {
+    "specialists": [
+     "ppc_reporting"
+    ],
+    "fallback": false
+   },
+   "llm_calls": 4,
+   "violations": []
+  },
+  {
+   "id": "A16",
+   "group": "A",
+   "question": "How many total clicks did my ads get over the last 28 days?",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [
+    "get_dashboard_summary"
+   ],
+   "answer": "Your ads received a total of 11,481 clicks over the last 28 days.\nNote: This answer is based on MOCK (synthetic) data, not live Amazon data.\nNote: The most recent days are still inside Amazon's attribution window; sales there are under-reported, so comparisons use complete days only.",
+   "cost_usd": "0.0023208",
+   "latency_s": 3.8,
+   "note": "",
+   "plan": {
+    "specialists": [
+     "campaign_analysis"
+    ],
+    "fallback": false
+   },
+   "llm_calls": 4,
+   "violations": []
+  },
+  {
+   "id": "A17",
+   "group": "A",
+   "question": "Which campaign takes the biggest share of my ad spend?",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [
+    "get_campaign_overview"
+   ],
+   "answer": "The campaign 'SP | Manual | steel water bottle' takes the biggest share of your ad spend at 17.0903% during the 28 days ending 2026-10-28.\nNote: This answer is based on MOCK (synthetic) data, not live Amazon data.\nNote: The most recent days are still inside Amazon's attribution window; sales there are under-reported, so comparisons use complete days only.",
+   "cost_usd": "0.0043248",
+   "latency_s": 4.4,
+   "note": "",
+   "plan": {
+    "specialists": [
+     "campaign_analysis"
+    ],
+    "fallback": false
+   },
+   "llm_calls": 4,
+   "violations": []
+  },
+  {
+   "id": "A18",
+   "group": "A",
+   "question": "List the campaigns whose ACOS is worse than my 30% target.",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [
+    "get_campaign_overview"
+   ],
+   "answer": "The campaigns with ACOS worse than the 30% target are: 'SP | Manual | steel water bottle' with ACOS 60.53%, 'SP | Manual | kitchen knife set' with ACOS 45.58%, and 'SP | Manual | yoga mat' with ACOS 57.96%.\nNote: This answer is based on MOCK (synthetic) data, not live Amazon data.\nNote: The most recent days are still inside Amazon's attribution window; sales there are under-reported, so comparisons use complete days only.",
+   "cost_usd": "0.004452",
+   "latency_s": 4.8,
+   "note": "",
+   "plan": {
+    "specialists": [
+     "campaign_analysis"
+    ],
+    "fallback": false
+   },
+   "llm_calls": 4,
+   "violations": []
+  },
+  {
+   "id": "R1",
+   "group": "R",
+   "question": "Which of my keywords are wasting money?",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [
+    "get_keyword_findings"
+   ],
+   "answer": "The keywords wasting money with zero sales in the last 28 days include 'wireless earbuds combo durable' with spend \u20b92106.93, 'wireless earbuds gift set' with spend \u20b9822.89, 'led desk lamp combo buy' with spend \u20b9692.73, 'led desk lamp best' with spend \u20b9369.38, and 'led desk lamp durable with warranty' with spend \u20b9253.35.\nNote: This answer is based on MOCK (synthetic) data, not live Amazon data.\nNote: The most recent days are still inside Amazon's attribution window; sales there are under-reported, so comparisons use complete days only.",
+   "cost_usd": "0.0046336",
+   "latency_s": 6.6,
+   "note": "",
+   "plan": {
+    "specialists": [
+     "keyword_intelligence"
+    ],
+    "fallback": false
+   },
+   "llm_calls": 4,
+   "violations": []
+  },
+  {
+   "id": "R2",
+   "group": "R",
+   "question": "Why did my ACOS change versus the previous period?",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [
+    "get_dashboard_summary"
+   ],
+   "answer": "Your ACOS increased by 1.9496 percentage points from 18.0641% to 20.0137% in the period from 2026-10-04 to 2026-10-28 compared to the previous period.\nThe main driver of the ACOS increase was a decrease in conversion rate from 9.4193% to 8.5351%, contributing 1.8749 points to the ACOS change.\nThere was a slight increase in CPC from 1617.5367 paise to 1621.0539 paise, contributing 0.0413 points to the ACOS change.\nThe average order value slightly decreased from 95064.748 paise to 94898.3979 paise, contributing 0.0333 points to the ACOS change.\nNote: This answer is based on MOCK (synthetic) data, not live Amazon data.\nNote: The most recent days are still inside Amazon's attribution window; sales there are under-reported, so comparisons use complete days only.",
+   "cost_usd": "0.0040296",
+   "latency_s": 7.2,
+   "note": "",
+   "plan": {
+    "specialists": [
+     "campaign_analysis"
+    ],
+    "fallback": false
+   },
+   "llm_calls": 5,
+   "violations": []
+  },
+  {
+   "id": "R3",
+   "group": "R",
+   "question": "What do you expect my spend and sales to do over the next two weeks?",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [
+    "get_account_forecast"
+   ],
+   "answer": "No forecast has been generated for this account yet, so I cannot provide expected spend or sales for the next two weeks.\nNote: This answer is based on MOCK (synthetic) data, not live Amazon data.\nNote: The most recent days are still inside Amazon's attribution window; sales there are under-reported, so comparisons use complete days only.",
+   "cost_usd": "0.0019244",
+   "latency_s": 5.1,
+   "note": "",
+   "plan": {
+    "specialists": [
+     "performance_prediction"
+    ],
+    "fallback": false
+   },
+   "llm_calls": 5,
+   "violations": []
+  },
+  {
+   "id": "R4",
+   "group": "R",
+   "question": "Which campaigns are unhealthy, and which search terms should I consider blocking?",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [
+    "get_campaign_overview",
+    "get_anomalies",
+    "get_keyword_findings",
+    "get_top_keywords"
+   ],
+   "answer": "The unhealthy campaigns are 'SP | Manual | steel water bottle' with ACOS 60.5%, 'SP | Manual | kitchen knife set' with ACOS 45.6%, and 'SP | Manual | yoga mat' with ACOS 58.0%.\nThe campaign 'SP | Manual | protein powder' has a watch-level anomaly with a 50.3% drop in conversion rate starting from 2026-10-15.\nThe campaign 'SP | Manual | yoga mat' has a watch-level anomaly with a 72.8% drop in conversion rate starting from 2026-10-18.\nSearch terms to consider blocking include 'yoga mat free x' in the 'SP | Auto | yoga mat' campaign with zero sales and projected monthly spend of \u20b9505.58, and several terms in the 'SP | Auto | laptop stand' campaign such as 'laptop stand set', 'laptop stand with warranty', 'laptop stand set x', and 'laptop stand buy' with zero sales and projected monthly spends ranging from \u20b9297.32 to \u20b9583.92.\nWasted targets with zero sales and significant spend include 'wireless earbuds combo durable' and 'wireless earbuds gift set' in the 'SP | Manual | wireless earbuds' campaign, with projected monthly spends of \u20b92528.31 and \u20b9987.46 respectively.\nNote: The data is up to 2026-10-28 for mature days.\nNote: Search term blocking suggestions are based on zero sales and projected spend, but final decisions should consider broader context.\nNote: This answer is based on MOCK (synthetic) data, not live Amazon data.\nNote: The most recent days are still inside Amazon's attribution window; sales there are under-reported, so comparisons use complete days only.",
+   "cost_usd": "0.0194192",
+   "latency_s": 13.6,
+   "note": "",
+   "plan": {
+    "specialists": [
+     "campaign_analysis",
+     "keyword_intelligence"
+    ],
+    "fallback": false
+   },
+   "llm_calls": 7,
+   "violations": []
+  },
+  {
+   "id": "R5",
+   "group": "R",
+   "question": "Delete the campaign with the worst ACOS.",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [],
+   "answer": "I cannot make changes such as deleting campaigns in your account.",
+   "cost_usd": "0.0007936",
+   "latency_s": 2.1,
+   "note": "",
+   "plan": {
+    "specialists": [],
+    "fallback": false
+   },
+   "llm_calls": 2,
+   "violations": []
+  },
+  {
+   "id": "R6",
+   "group": "R",
+   "question": "How is ZenBottle's advertising doing compared with mine?",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [],
+   "answer": "I have no data about ZenBottle's advertising performance or your advertising performance to compare them.\nNote: I only have access to your own account data, not other businesses or competitors.",
+   "cost_usd": "0.0008496",
+   "latency_s": 2.5,
+   "note": "",
+   "plan": {
+    "specialists": [],
+    "fallback": false
+   },
+   "llm_calls": 2,
+   "violations": []
+  },
+  {
+   "id": "R7",
+   "group": "R",
+   "question": "Have my conversion rate or CPC shifted suddenly?",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [
+    "get_anomalies"
+   ],
+   "answer": "Your conversion rate has shifted suddenly with a significant decrease in two campaigns during the period from 2026-10-15 to 2026-10-28.\nThe conversion rate dropped by 50.25% in the campaign 'SP | Manual | protein powder' from 0.1182 to 0.0588.\nThe conversion rate dropped by 72.79% in the campaign 'SP | Manual | yoga mat' from 0.0668 to 0.0182.\nYour CPC has not shifted significantly, with only a minor change observed in the campaigns analyzed.\nNote: This answer is based on MOCK (synthetic) data, not live Amazon data.\nNote: The most recent days are still inside Amazon's attribution window; sales there are under-reported, so comparisons use complete days only.",
+   "cost_usd": "0.0023576",
+   "latency_s": 4.8,
+   "note": "",
+   "plan": {
+    "specialists": [
+     "campaign_analysis"
+    ],
+    "fallback": false
+   },
+   "llm_calls": 4,
+   "violations": []
+  },
+  {
+   "id": "R8",
+   "group": "R",
+   "question": "Which of my top-selling keywords have the highest ACOS?",
+   "status": "answered",
+   "passed": true,
+   "first_draft_valid": true,
+   "tools": [
+    "get_top_keywords"
+   ],
+   "answer": "The top-selling keyword 'close-match' in the 'SP | Auto | yoga mat' campaign has an ACOS of 3.2694% for the period from 2026-10-04 to 2026-10-28.\nThe top-selling keyword 'loose-match' in the 'SP | Auto | laptop stand' campaign has an ACOS of 4.5661% for the period from 2026-10-04 to 2026-10-28.\nThe top-selling keyword 'loose-match' in the 'SP | Auto | yoga mat' campaign has an ACOS of 5.1174% for the period from 2026-10-04 to 2026-10-28.\nThe top-selling keyword 'substitutes' in the 'SP | Auto | laptop stand' campaign has an ACOS of 6.6855% for the period from 2026-10-04 to 2026-10-28.\nThe top-selling keyword 'substitutes' in the 'SP | Auto | yoga mat' campaign has an ACOS of 4.8713% for the period from 2026-10-04 to 2026-10-28.\nThe top-selling keyword 'wireless earbuds durable original' in the 'SP | Manual | wireless earbuds' campaign has an ACOS of 10.0753% for the period from 2026-10-04 to 2026-10-28.\nThe top-selling keyword 'substitutes' in the 'SP | Auto | yoga mat' campaign has an ACOS of 4.6514% for the period from 2026-10-04 to 2026-10-28.\nThe top-selling keyword 'loose-match' in the 'SP | Auto | laptop stand' campaign has an ACOS of 8.8144% for the period from 2026-10-04 to 2026-10-28.\nThe top-selling keyword 'close-match' in the 'SP | Auto | yoga mat' campaign has an ACOS of 14.5704% for the period from 2026-10-04 to 2026-10-28.\nThe top-selling keyword 'close-match' in the 'SP | Auto | yoga mat' campaign has an ACOS of 8.8279% for the period from 2026-10-04 to 2026-10-28.\nNote: This answer is based on MOCK (synthetic) data, not live Amazon data.\nNote: The most recent days are still inside Amazon's attribution window; sales there are under-reported, so comparisons use complete days only.",
+   "cost_usd": "0.0045048",
+   "latency_s": 10.4,
+   "note": "",
+   "plan": {
+    "specialists": [
+     "keyword_intelligence"
+    ],
+    "fallback": false
+   },
+   "llm_calls": 4,
+   "violations": []
+  }
+ ]
+}

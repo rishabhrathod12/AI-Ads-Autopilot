@@ -92,6 +92,14 @@ class SearchTermInfo:
 class PerformanceReader(Protocol):
     async def freshness(self) -> Freshness: ...
 
+    async def data_version(self) -> str:
+        """A token that changes whenever new data is ingested for this organization.
+
+        Cheap to compute (it reads the small table of ingestion runs, not the metrics), so a result
+        computed from the data can be cached under it and discarded the moment it changes.
+        """
+        ...
+
     async def provenance(self, period: DateRange) -> Provenance: ...
 
     async def campaigns(self) -> list[CampaignInfo]: ...

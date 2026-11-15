@@ -3,14 +3,16 @@
 All routes are tenant-scoped through ``get_scope``. Analytics never mutates advertising data.
 """
 
+from collections.abc import Awaitable, Callable
 from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import PlainTextResponse
 
+from app.api.cache import ResultCache
 from app.api.serialize import envelope, to_jsonable
 from app.api.tenancy import ANALYST_REQUIRED, Scope, get_scope
 from app.application.analytics.anomalies import detect_anomalies
@@ -41,6 +43,31 @@ TargetAcos = Annotated[Decimal, Query(gt=0, le=1000, description="Target ACOS, i
 Limit = Annotated[int, Query(ge=1, le=200)]
 
 
+async def cached[T](
+    request: Request,
+    scope: Scope,
+    route: str,
+    params: tuple[Any, ...],
+    compute: Callable[[], Awaitable[T]],
+) -> T:
+    """Serve a read-only response from the cache when the organization's data has not changed.
+
+    Called only after authentication, the role check and the tenant session, so a hit is always for
+    the caller's own organization (it is part of the key, with the route, parameters and the data
+    version). On any cache trouble the response is simply computed.
+    """
+    cache: ResultCache = request.app.state.result_cache
+    metrics = request.app.state.metrics
+    if not cache.enabled:
+        return await compute()
+    key = (scope.organization_id, route, params, await scope.reader.data_version())
+    before = (cache.hits, cache.shared)
+    result = await cache.get_or_compute(key, compute)
+    outcome = "hit" if cache.hits > before[0] else "shared" if cache.shared > before[1] else "miss"
+    metrics.observe_cache(route, outcome)
+    return cast(T, result)
+
+
 async def period_of(scope: Scope, date_from: date | None, date_to: date | None) -> DateRange:
     fresh = await scope.reader.freshness()
     if fresh.latest_date is None:
@@ -56,57 +83,84 @@ async def period_of(scope: Scope, date_from: date | None, date_to: date | None) 
 
 @router.get("/dashboard/summary")
 async def get_dashboard_summary(
-    date_from: FromParam = None, date_to: ToParam = None, scope: Scope = Depends(get_scope)
+    request: Request,
+    date_from: FromParam = None,
+    date_to: ToParam = None,
+    scope: Scope = Depends(get_scope),
 ) -> dict[str, Any]:
     period = await period_of(scope, date_from, date_to)
-    result = await dashboard_summary(scope.reader, period)
-    return envelope(result, result.provenance, result.freshness, drop=("trend",))
+
+    async def compute() -> dict[str, Any]:
+        result = await dashboard_summary(scope.reader, period)
+        return envelope(result, result.provenance, result.freshness, drop=("trend",))
+
+    return await cached(request, scope, "dashboard_summary", (period.start, period.end), compute)
 
 
 @router.get("/dashboard/trends")
 async def get_dashboard_trends(
-    date_from: FromParam = None, date_to: ToParam = None, scope: Scope = Depends(get_scope)
+    request: Request,
+    date_from: FromParam = None,
+    date_to: ToParam = None,
+    scope: Scope = Depends(get_scope),
 ) -> dict[str, Any]:
     period = await period_of(scope, date_from, date_to)
-    result = await dashboard_summary(scope.reader, period)
-    points = [
-        {
-            "date": p.day,
-            "is_mature": p.is_mature,
-            "totals": p.totals,
-            "kpis": Kpis.from_totals(p.totals),
-        }
-        for p in result.trend
-    ]
-    body = envelope({"period": period, "points": points}, result.provenance, result.freshness)
-    return body
+
+    async def compute() -> dict[str, Any]:
+        result = await dashboard_summary(scope.reader, period)
+        points = [
+            {
+                "date": p.day,
+                "is_mature": p.is_mature,
+                "totals": p.totals,
+                "kpis": Kpis.from_totals(p.totals),
+            }
+            for p in result.trend
+        ]
+        return envelope({"period": period, "points": points}, result.provenance, result.freshness)
+
+    return await cached(request, scope, "dashboard_trends", (period.start, period.end), compute)
 
 
 @router.get("/campaigns")
 async def get_campaigns(
+    request: Request,
     date_from: FromParam = None,
     date_to: ToParam = None,
     target_acos: TargetAcos = DEFAULT_TARGET_ACOS_PCT,
     scope: Scope = Depends(get_scope),
 ) -> dict[str, Any]:
     period = await period_of(scope, date_from, date_to)
-    result = await campaign_overview(scope.reader, period, target_acos_pct=target_acos)
-    return envelope(result, result.provenance, result.freshness)
+
+    async def compute() -> dict[str, Any]:
+        result = await campaign_overview(scope.reader, period, target_acos_pct=target_acos)
+        return envelope(result, result.provenance, result.freshness)
+
+    params = (period.start, period.end, str(target_acos))
+    return await cached(request, scope, "campaigns", params, compute)
 
 
 @router.get("/campaigns/changes")
 async def get_campaign_changes(
-    date_from: FromParam = None, date_to: ToParam = None, scope: Scope = Depends(get_scope)
+    request: Request,
+    date_from: FromParam = None,
+    date_to: ToParam = None,
+    scope: Scope = Depends(get_scope),
 ) -> dict[str, Any]:
     period = await period_of(scope, date_from, date_to)
-    changes = await campaign_changes(scope.reader, period)
-    fresh = await scope.reader.freshness()
-    prov = await scope.reader.provenance(period)
-    return envelope({"campaigns": changes}, prov, fresh)
+
+    async def compute() -> dict[str, Any]:
+        changes = await campaign_changes(scope.reader, period)
+        fresh = await scope.reader.freshness()
+        prov = await scope.reader.provenance(period)
+        return envelope({"campaigns": changes}, prov, fresh)
+
+    return await cached(request, scope, "campaign_changes", (period.start, period.end), compute)
 
 
 @router.get("/keywords")
 async def get_keywords(
+    request: Request,
     date_from: FromParam = None,
     date_to: ToParam = None,
     sort: SortKey = "spend",
@@ -114,12 +168,18 @@ async def get_keywords(
     scope: Scope = Depends(get_scope),
 ) -> dict[str, Any]:
     period = await period_of(scope, date_from, date_to)
-    result = await target_table(scope.reader, period, sort=sort, limit=limit)
-    return envelope(result, result.provenance, result.freshness)
+
+    async def compute() -> dict[str, Any]:
+        result = await target_table(scope.reader, period, sort=sort, limit=limit)
+        return envelope(result, result.provenance, result.freshness)
+
+    params = (period.start, period.end, sort, limit)
+    return await cached(request, scope, "keywords", params, compute)
 
 
 @router.get("/search-terms")
 async def get_search_terms(
+    request: Request,
     date_from: FromParam = None,
     date_to: ToParam = None,
     sort: SortKey = "spend",
@@ -127,12 +187,18 @@ async def get_search_terms(
     scope: Scope = Depends(get_scope),
 ) -> dict[str, Any]:
     period = await period_of(scope, date_from, date_to)
-    result = await search_term_table(scope.reader, period, sort=sort, limit=limit)
-    return envelope(result, result.provenance, result.freshness)
+
+    async def compute() -> dict[str, Any]:
+        result = await search_term_table(scope.reader, period, sort=sort, limit=limit)
+        return envelope(result, result.provenance, result.freshness)
+
+    params = (period.start, period.end, sort, limit)
+    return await cached(request, scope, "search_terms", params, compute)
 
 
 @router.get("/keywords/findings")
 async def get_keyword_findings(
+    request: Request,
     date_from: FromParam = None,
     date_to: ToParam = None,
     target_acos: TargetAcos = DEFAULT_TARGET_ACOS_PCT,
@@ -140,29 +206,37 @@ async def get_keyword_findings(
     scope: Scope = Depends(get_scope),
 ) -> dict[str, Any]:
     period = await period_of(scope, date_from, date_to)
-    full = await keyword_analysis(scope.reader, period, target_acos_pct=target_acos)
-    trimmed = replace(
-        full,
-        wasted_targets=full.wasted_targets[:limit],
-        underperforming_targets=full.underperforming_targets[:limit],
-        negative_candidates=full.negative_candidates[:limit],
-        opportunities=full.opportunities[:limit],
-    )
-    body = envelope(trimmed, full.provenance, full.freshness)
-    body["data"]["counts"] = {
-        "wasted_targets": len(full.wasted_targets),
-        "underperforming_targets": len(full.underperforming_targets),
-        "negative_candidates": len(full.negative_candidates),
-        "opportunities": len(full.opportunities),
-        "limit_per_list": limit,
-    }
-    return body
+
+    async def compute() -> dict[str, Any]:
+        full = await keyword_analysis(scope.reader, period, target_acos_pct=target_acos)
+        trimmed = replace(
+            full,
+            wasted_targets=full.wasted_targets[:limit],
+            underperforming_targets=full.underperforming_targets[:limit],
+            negative_candidates=full.negative_candidates[:limit],
+            opportunities=full.opportunities[:limit],
+        )
+        body = envelope(trimmed, full.provenance, full.freshness)
+        body["data"]["counts"] = {
+            "wasted_targets": len(full.wasted_targets),
+            "underperforming_targets": len(full.underperforming_targets),
+            "negative_candidates": len(full.negative_candidates),
+            "opportunities": len(full.opportunities),
+            "limit_per_list": limit,
+        }
+        return body
+
+    params = (period.start, period.end, str(target_acos), limit)
+    return await cached(request, scope, "keyword_findings", params, compute)
 
 
 @router.get("/anomalies")
-async def get_anomalies(scope: Scope = Depends(get_scope)) -> dict[str, Any]:
-    result = await detect_anomalies(scope.reader)
-    return envelope(result, result.provenance, result.freshness)
+async def get_anomalies(request: Request, scope: Scope = Depends(get_scope)) -> dict[str, Any]:
+    async def compute() -> dict[str, Any]:
+        result = await detect_anomalies(scope.reader)
+        return envelope(result, result.provenance, result.freshness)
+
+    return await cached(request, scope, "anomalies", (), compute)
 
 
 @router.post("/forecasts/account", status_code=201)

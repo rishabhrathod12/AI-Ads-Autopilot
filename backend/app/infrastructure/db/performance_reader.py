@@ -76,6 +76,19 @@ class SqlPerformanceReader:
         mature = first_immature - timedelta(days=1) if first_immature is not None else latest
         return Freshness(latest, mature)
 
+    async def data_version(self) -> str:
+        """Count, newest start, rows ingested and newest ingestion time of this organization's
+        ingestion runs. Every sync writes a run, so any new data changes this token."""
+        R = m.ReportRun
+        stmt = select(
+            func.count(R.id),
+            func.max(R.created_at),
+            func.coalesce(func.sum(R.rows_ingested), 0),
+            func.max(R.ingested_at),
+        ).where(R.organization_id == self._org)
+        count, created, rows, ingested = (await self._rows(stmt))[0]
+        return f"{count}|{created}|{rows}|{ingested}"
+
     async def provenance(self, period: DateRange) -> Provenance:
         stmt = (
             select(P.data_source, func.max(P.ingested_at))

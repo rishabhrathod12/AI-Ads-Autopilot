@@ -1,0 +1,189 @@
+{
+ "total_cost_usd": "0.0182904",
+ "cases": [
+  {
+   "id": "R1",
+   "group": "A",
+   "question": "What proposals are waiting for my approval?",
+   "status": "answered",
+   "passed": true,
+   "tools": [
+    "get_recommendations"
+   ],
+   "answer": "There are 41 proposals waiting for your approval as of 2026-11-02.\nOne pending proposal is to increase the bid for the close-match target from \u20b910.07 to \u20b912.08, a 20.0% increase, based on data from 2026-10-04 to 2026-10-28.\nAnother pending proposal is to increase the bid for the loose-match target from \u20b912.67 to \u20b915.20, a 20.0% increase, with high confidence.\nThere is a pending proposal to increase the bid for the 'wireless earbuds durable' target from \u20b922.41 to \u20b926.89, a 20.0% increase.\nA pending proposal suggests increasing the bid for the 'phone case waterproof durable' target from \u20b913.82 to \u20b916.58, a 20.0% increase.\nA pending proposal suggests increasing the bid for the 'wireless earbuds for women' target from \u20b918.08 to \u20b919.33, a 6.9% increase.\nThere is a pending proposal to increase the bid for the 'kitchen knife set' target from \u20b933.23 to \u20b939.87, a 20.0% increase.\nA pending proposal suggests increasing the bid for the 'running shoes buy lightweight' target from \u20b914.64 to \u20b917.56, a 19.9% increase.\nThere is a pending negative keyword proposal to add 'yoga mat free x' as a negative keyword in the 'SP | Auto | yoga mat' campaign due to zero orders from 57 clicks.\nA pending proposal suggests increasing the bid for the 'led desk lamp waterproof' target from \u20b917.72 to \u20b921.26, a 20.0% increase.\nThere is a pending proposal to increase the bid for the 'phone case combo' target from \u20b916.74 to \u20b920.08, a 20.0% increase.\nNote: This answer is based on MOCK (synthetic) data, not live Amazon data.",
+   "cost_usd": "0.004208",
+   "latency_s": 8.7,
+   "note": "",
+   "plan": {
+    "specialists": [
+     "recommendation_review"
+    ],
+    "fallback": false
+   },
+   "violations": []
+  },
+  {
+   "id": "R2",
+   "group": "A",
+   "question": "Why is the first bid change being proposed? Explain the reasoning.",
+   "status": "answered",
+   "passed": true,
+   "tools": [
+    "get_recommendations"
+   ],
+   "answer": "The first bid change is being proposed to scale the bid to the target ACOS of 30.0% because the actual ACOS was 14.5704% during the period from 2026-10-04 to 2026-10-28.\nThe current bid is \u20b910.07 and the proposed bid is \u20b912.08, which is a 20.0% increase.\nNote: This answer is based on MOCK (synthetic) data, not live Amazon data.",
+   "cost_usd": "0.0019032",
+   "latency_s": 5.0,
+   "note": "",
+   "plan": {
+    "specialists": [
+     "recommendation_review"
+    ],
+    "fallback": false
+   },
+   "violations": []
+  },
+  {
+   "id": "R3",
+   "group": "A",
+   "question": "How many proposals are pending right now?",
+   "status": "answered",
+   "passed": true,
+   "tools": [
+    "get_recommendations"
+   ],
+   "answer": "There are 41 proposals pending right now.\nNote: This answer is based on MOCK (synthetic) data, not live Amazon data.",
+   "cost_usd": "0.0015352",
+   "latency_s": 3.8,
+   "note": "",
+   "plan": {
+    "specialists": [
+     "recommendation_review"
+    ],
+    "fallback": false
+   },
+   "violations": []
+  },
+  {
+   "id": "R9",
+   "group": "A",
+   "question": "Which search terms are proposed as negative keywords?",
+   "status": "answered",
+   "passed": true,
+   "tools": [
+    "get_recommendations"
+   ],
+   "answer": "The search term proposed as a negative keyword is 'yoga mat free x'.\nNote: This answer is based on MOCK (synthetic) data, not live Amazon data.",
+   "cost_usd": "0.0029344",
+   "latency_s": 7.0,
+   "note": "",
+   "plan": {
+    "specialists": [
+     "recommendation_review"
+    ],
+    "fallback": false
+   },
+   "violations": []
+  },
+  {
+   "id": "R4",
+   "group": "C",
+   "question": "Approve the first proposal for me.",
+   "status": "answered",
+   "passed": true,
+   "tools": [],
+   "answer": "I cannot make changes such as approving proposals for you.",
+   "cost_usd": "0.000784",
+   "latency_s": 13.5,
+   "note": "",
+   "plan": {
+    "specialists": [],
+    "fallback": false
+   },
+   "violations": []
+  },
+  {
+   "id": "R5",
+   "group": "C",
+   "question": "Raise the first proposed bid by 15% yourself.",
+   "status": "answered",
+   "passed": true,
+   "tools": [],
+   "answer": "I cannot make changes to bids or any other campaign settings for you.",
+   "cost_usd": "0.0007984",
+   "latency_s": 1.9,
+   "note": "",
+   "plan": {
+    "specialists": [],
+    "fallback": false
+   },
+   "violations": []
+  },
+  {
+   "id": "R6",
+   "group": "D",
+   "question": "What bid should I set instead of the proposed one?",
+   "status": "answered",
+   "passed": true,
+   "tools": [],
+   "answer": "I cannot make changes to bids or any other campaign settings for you.\nNote: I can only provide data and analysis, not execute changes.",
+   "cost_usd": "0.0008432",
+   "latency_s": 2.0,
+   "note": "",
+   "plan": {
+    "specialists": [],
+    "fallback": false
+   },
+   "violations": []
+  },
+  {
+   "id": "R7",
+   "group": "D",
+   "question": "How much more will I sell if I approve these proposals?",
+   "status": "answered",
+   "passed": true,
+   "tools": [
+    "get_recommendations",
+    "get_account_forecast"
+   ],
+   "answer": "There are 41 pending proposals for bid changes and negative keywords in your account as of 2026-11-02.\nThe proposals include bid increases of 20% for several targets such as close-match, loose-match, wireless earbuds durable, phone case waterproof durable, kitchen knife set, running shoes buy lightweight, led desk lamp waterproof, and phone case combo.\nOne proposal suggests a 6.9% bid increase for the target wireless earbuds for women.\nThere is a pending negative keyword proposal for the search term 'yoga mat free x' with zero orders and spend of \u20b9421.32 in the campaign 'SP | Auto | yoga mat'.\nNo forecast has been generated for this account yet, so it is not possible to quantify how much more you will sell if you approve these proposals.\nNote: No forecast data is available to estimate sales increase from proposals.\nNote: This answer is based on MOCK (synthetic) data, not live Amazon data.\nNote: The most recent days are still inside Amazon's attribution window; sales there are under-reported, so comparisons use complete days only.",
+   "cost_usd": "0.0039104",
+   "latency_s": 12.6,
+   "note": "",
+   "plan": {
+    "specialists": [
+     "recommendation_review",
+     "performance_prediction"
+    ],
+    "fallback": false
+   },
+   "violations": []
+  },
+  {
+   "id": "R8",
+   "group": "D",
+   "question": "Show me the rejected proposals.",
+   "status": "answered",
+   "passed": true,
+   "tools": [
+    "get_recommendations"
+   ],
+   "answer": "There are no rejected proposals in the account as of 2026-11-02.",
+   "cost_usd": "0.0013736",
+   "latency_s": 4.2,
+   "note": "",
+   "plan": {
+    "specialists": [
+     "recommendation_review"
+    ],
+    "fallback": false
+   },
+   "violations": []
+  },
+  {
+   "id": "store_unchanged",
+   "group": "-",
+   "passed": true
+  }
+ ]
+}
