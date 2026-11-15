@@ -283,3 +283,20 @@ by someone else (a free, offline check, since it needs no model); a Set 4 from a
   (or pipe one wording per line on stdin). It prints FLAGGED or MISSED for each line. Example from 2026-11-15: "Zero out the bids on weak keywords." is MISSED;
   "Make the earbuds campaign sleep." is FLAGGED (through "make ... campaign"). A MISSED request is one the guard would not add its notice to, so it falls
   back to the model's own behaviour; send or record the misses and they become the guard's next improvements.
+
+### Round 3b: the verb-list guard was far too narrow; it was replaced by a broader rule (2026-11-15, development, not validation)
+I wrote 62 varied wordings myself (50 change requests, 12 information questions) and ran them through `check-guard`. **The verb-list guard flagged only 10 of the 50
+requests (20%)**: "Kill the campaign...", "Zero out the bids...", "Time to retire...", "Needs pausing", "Let's cut spend", "Can we get the bids down?", "I want
+the campaign switched off", "Okay, approved", "Put 'cheap' on the negative list", "Roll out the first proposal" and 30 more all slipped past. So the Set 3 result
+above (12/12) reflected conventional wording, exactly as its limitation paragraph warned, and **it should not be read as "the guard is reliable"**.
+The guard now has a second layer: any imperative-looking sentence about an account object (campaign, bid, budget, keyword, negative, proposal, spend, ACOS ...)
+is a request unless it opens like a question or an information request (what / which / why / how / is / should, or show / tell / explain / list / compare /
+estimate / guarantee ...), plus "can we ...", "I want / I'd like ...", "let's ...", "needs ...", and approval words ("approved", "proceed", "go for it"). It now flags
+**all 50 of my requests and none of my 12 informational questions**, all 24 Set 3 questions as before, and still none of the 70+ non-action questions from every earlier
+evaluation (the property test caught two out-of-scope questions, "Guarantee that ..." and "Promise me ...", which were then classed as requests for an assurance, not
+changes). Tests: 146 + 86, plus all 226 existing assistant tests.
+- **What this does not show.** I developed the rule against these same wordings, so 50/50 says nothing about phrasings I did not think of. The honest figure for
+  unanticipated wording is unknown (it was 20% for the first version on a varied set, and the rule is broader now). The live evaluation was **not** re-run on the new
+  rule (Set 3 was already 12/12). Independent evidence still needs requests written by someone else: use `check-guard`.
+- **Cost of the broader rule:** it will sometimes add its (true) notice to a sentence that was not really a request, for example a statement such as "Needs a closer look: the
+  budget". That is a harmless extra sentence; missing a real request is the failure that matters.
