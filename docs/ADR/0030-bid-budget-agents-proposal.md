@@ -50,3 +50,12 @@ assistant refused 10/12 (Set 1) and 9/12 (Set 2, after the prompt was tightened)
 above therefore stands: **no write-capable tool (Option B) should be built until action refusal is reliable at whichever engine is the default.** The open choice
 is how to get there: graph as the default, a deterministic code-level guard for action requests, or accepting the current behaviour (the assistant has no write
 path, so a missed refusal misleads but changes nothing). Each needs a new pre-registered Set 3.
+
+## Update 2026-11-15 (later): a code-level guard met the refusal bar (still PROPOSED)
+The owner chose the deterministic guard (`assistant/action_guard.py`). On the pre-registered, fresh Set 3 both engines refused 12/12 action requests,
+the default single engine also met every other criterion, at $0.04-0.06 per engine (docs/ASSISTANT.md, "Round 3"). **Limitation:** the guard is a hand-written
+list built by the same author who wrote Set 3, so it is shown to work on wordings that author anticipated, not on unanticipated ones; unflagged requests
+fall back to the model's own 9-10 of 12. The precondition in this ADR ("no write-capable tool until action refusal is reliable at the default engine") is
+therefore **met for the tested wordings, not proven in general**. Before Option B is built: a Set 4 of requests written by someone else (offline check
+first, since it needs no model), and Option B itself would still be gated, off by default, with its own pre-registered evaluation including
+prompt-injection tests. Nothing has been built for Option B.

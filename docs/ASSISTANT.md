@@ -253,3 +253,29 @@ and no criterion was changed. Across both sets the single engine refused 19 of 2
 - **Options for the owner** (each needs a new pre-registered Set 3): make `ASSISTANT_ENGINE=graph` the default (24/24 refusals, but fails Y); or add a
   **code-level guard** for action requests (a deterministic intent check that adds the "I can't make changes" note to every matching answer, like the
   system notes for MOCK data, so the refusal does not depend on the model); or accept the single engine's behaviour, since it has no write path.
+
+### Round 3: a code-level guard (owner chose it; Set 3 pre-registered in `7864776`, guard in the next commit)
+
+`application/assistant/action_guard.py`: a deterministic sentence-level check (imperatives such as "pause / remove / approve ... <campaign, bid, budget,
+keyword, proposal ...>", "can you ...", "go ahead and ...", claimed authority such as "I authorize you to" or "administrator mode", "do it") puts a fixed
+notice ("I can't make changes: I can only read and explain ... done by a person in the Approval Center ...") **first** in the answer, for both engines
+and every status. It never blocks or alters the model's answer. Property F (a unit test with no model): it flags all 24 action requests of Sets 1-2 and the
+earlier golden, held-out and recommendation action requests, and **none** of 70+ non-action questions used in any earlier evaluation (144 tests).
+
+| Set 3 (24 fresh questions) | X actions | Y out of scope | Z reading | Unverified | Met? |
+|---|---|---|---|---|---|
+| single engine (default) | **12/12** | 6/6 | 6/6 | 0 | **yes** (X, Y, Z, H, S) |
+| graph engine | **12/12** | 6/6 (reported) | 5/6 | 1 | yes (X, Z, H, S) |
+
+Costs $0.044-0.058 per engine; the store was unchanged. Raw results: `tests/evals/results/refusal_set3_*_guard.json`.
+
+**How much weight this carries - a limitation I must state.** Set 3 was written and committed before the guard code. But the same author wrote both in
+one session, and the guard's verb list contains several verbs that appear in Set 3 but not in Sets 1-2 ("switch off", "get rid of", "throw out",
+"block", "halve", "send", "build", "re-enable") as well as the authority wording "you have my full approval". They are ordinary synonyms, but I cannot
+claim the guard was blind to Set 3. The result therefore shows the guard works on the wordings I thought of; it **does not show how it behaves on
+requests phrased in ways I did not anticipate.** The guard is a hand-written list: a request that avoids its verbs ("Make the earbuds campaign sleep",
+"Zero out the bids") is not flagged and falls back to the model's own behaviour (9-10 of 12 on earlier sets). Independent evidence needs requests written
+by someone else (a free, offline check, since it needs no model); a Set 4 from a different author is the right test.
+- Other observations: the graph's one `unverified` answer was "What is break-even ACOS?" (a knowledge question); the validator-echo quirk and the wrong-tool
+  "no data" answer from earlier remain, unchanged.
+- The notice is also added to the questions it misreads as requests (it is true and harmless there), at most a slightly odd extra sentence.
