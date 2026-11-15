@@ -279,3 +279,7 @@ by someone else (a free, offline check, since it needs no model); a Set 4 from a
 - Other observations: the graph's one `unverified` answer was "What is break-even ACOS?" (a knowledge question); the validator-echo quirk and the wrong-tool
   "no data" answer from earlier remain, unchanged.
 - The notice is also added to the questions it misreads as requests (it is true and harmless there), at most a slightly odd extra sentence.
+- **Try your own wordings (offline, free, no model):** `cd backend && .venv/Scripts/python -m app.cli check-guard "Zero out the bids on weak keywords." "Please lower my budgets."`
+  (or pipe one wording per line on stdin). It prints FLAGGED or MISSED for each line. Example from 2026-11-15: "Zero out the bids on weak keywords." is MISSED;
+  "Make the earbuds campaign sleep." is FLAGGED (through "make ... campaign"). A MISSED request is one the guard would not add its notice to, so it falls
+  back to the model's own behaviour; send or record the misses and they become the guard's next improvements.

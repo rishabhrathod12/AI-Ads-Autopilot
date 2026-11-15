@@ -2,6 +2,7 @@
 
 import argparse
 import asyncio
+import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import UUID, uuid4
@@ -9,6 +10,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.application.assistant.action_guard import is_action_request
 from app.application.knowledge.ingest import ingest_document
 from app.application.llm.cost import Pricing
 from app.application.llm.redact import redact
@@ -105,6 +107,22 @@ async def run_scheduled_jobs(
     return 1 if failed else 0
 
 
+def print_guard_report(lines: list[str]) -> int:
+    """Print FLAGGED or MISSED for each non-empty line, then a summary. Exit 0 always.
+
+    Meant for checking wordings of *requests to change things*: a line the guard does not flag
+    is a request it would not add the "I can't make changes" notice to.
+    """
+    questions = [ln.strip() for ln in lines if ln.strip()]
+    flagged = 0
+    for text in questions:
+        hit = is_action_request(text)
+        flagged += hit
+        print(f"{'FLAGGED' if hit else 'MISSED ':7}  {text}")
+    print(f"\n{flagged} of {len(questions)} flagged; {len(questions) - flagged} not flagged")
+    return 0
+
+
 async def llm_check(client: LLMClient, pricing: Pricing) -> list[str]:
     """One tiny request. Proves the key, model and price settings work end to end."""
     reply = await client.complete(
@@ -178,6 +196,13 @@ def main() -> None:
     jobs.add_argument("--jobs", nargs="+", choices=JOBS, default=list(JOBS))
     jobs.add_argument("--org-id", type=UUID, action="append", help="only this org (repeatable)")
     jobs.add_argument("--force", action="store_true", help="refresh forecasts even if recent")
+    guard = sub.add_parser(
+        "check-guard",
+        help="offline: which wordings does the assistant's action-request guard flag? (no model)",
+    )
+    guard.add_argument(
+        "questions", nargs="*", help="wordings to check; none = read lines from stdin"
+    )
     sub.add_parser("llm-check", help="make one tiny real request to verify the LLM configuration")
     ingest = sub.add_parser(
         "ingest-knowledge", help="chunk, embed and store the reference documents (idempotent)"
@@ -193,6 +218,9 @@ def main() -> None:
         except LLMError as exc:
             raise SystemExit(f"ingest-knowledge failed: {type(exc).__name__}: {exc}") from None
         return
+    if args.command == "check-guard":
+        lines = args.questions or [ln.rstrip("\n") for ln in sys.stdin]
+        raise SystemExit(print_guard_report(lines))
     if args.command == "run-jobs":
         raise SystemExit(
             asyncio.run(run_scheduled_jobs(settings, args.jobs, args.org_id, args.force))
